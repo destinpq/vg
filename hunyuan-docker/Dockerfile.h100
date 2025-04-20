@@ -4,15 +4,14 @@ FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONPATH=/root/hunyuan-models/HunyuanVideo
 ENV FLOW_REVERSE=true
-ENV USE_CPU_OFFLOAD=true
-ENV HF_HOME=/root/huggingface
+ENV USE_CPU_OFFLOAD=false
+ENV HF_HOME=/root/hunyuan-models/huggingface
 ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
 ENV MODEL_DIR=/root/output/hunyuan-models
 ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-# Prevent container from failing if NVIDIA drivers aren't available
-ENV NVIDIA_REQUIRE_CUDA="cuda>=12.0 brand=tesla,driver>=450,driver<451 brand=tesla,driver>=470,driver<471 brand=unknown,driver>=470,driver<471 brand=nvidia,driver>=470,driver<471 brand=nvidiartx,driver>=470,driver<471 brand=geforce,driver>=470,driver<471 brand=geforcertx,driver>=470,driver<471 brand=quadro,driver>=470,driver<471 brand=quadrortx,driver>=470,driver<471 brand=titan,driver>=470,driver<471 brand=titanrtx,driver>=470,driver<471"
+ENV NVIDIA_DRIVER_CAPABILITIES=all
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -24,33 +23,51 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create necessary directories
-RUN mkdir -p /root/huggingface \
+RUN mkdir -p /root/hunyuan-models/HunyuanVideo/ckpts \
+    && mkdir -p /root/hunyuan-models/huggingface \
     && mkdir -p /root/output/hunyuan-models
+
+# Set up working directory
+WORKDIR /root/hunyuan-models
 
 # Create and activate virtual environment
 RUN python3 -m venv /root/venv
 ENV PATH="/root/venv/bin:$PATH"
 
-# Upgrade pip and install dependencies
+# Upgrade pip and install base Python packages
 RUN pip install --upgrade pip setuptools wheel && \
     pip install torch==2.1.0 torchvision==0.16.0 --extra-index-url https://download.pytorch.org/whl/cu121
 
+# Install xformers for faster performance on H100
+RUN pip install xformers==0.0.23
+
+# Clone HunyuanVideo repository
+RUN git clone https://github.com/Tencent/HunyuanVideo.git /root/hunyuan-models/HunyuanVideo || echo "Git clone failed, continuing..."
+
 # Install HunyuanVideo dependencies
+WORKDIR /root/hunyuan-models/HunyuanVideo
+
+# Install dependencies either via setup.py or directly
+RUN if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then \
+      pip install -e . || echo "Failed to install via setup.py, installing dependencies directly"; \
+    fi
+
+# Install additional dependencies optimized for H100
 RUN pip install accelerate diffusers transformers safetensors einops timm pillow \
     ffmpeg-python opencv-python imageio imageio-ffmpeg \
-    omegaconf fairscale \
+    omegaconf peft bitsandbytes fairscale flash-attn triton \
     flask flask-cors requests tqdm huggingface_hub
 
 # Copy API files
-COPY hunyuan_api.py /root/
-COPY download_weights.py /root/
-COPY entrypoint.sh /root/
+COPY hunyuan_api.py /root/hunyuan-models/
+COPY download_weights.py /root/hunyuan-models/
+COPY entrypoint.sh /root/hunyuan-models/
 
 # Make scripts executable
-RUN chmod +x /root/entrypoint.sh
+RUN chmod +x /root/hunyuan-models/entrypoint.sh
 
 # Expose port for API
 EXPOSE 8000
 
 # Set entrypoint
-ENTRYPOINT ["/root/entrypoint.sh"] 
+ENTRYPOINT ["/root/hunyuan-models/entrypoint.sh"] 

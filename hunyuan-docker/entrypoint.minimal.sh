@@ -12,11 +12,18 @@ echo -e "${GREEN}=== Hunyuan Video API Server ===${NC}"
 
 # Check NVIDIA GPU
 echo -e "${BLUE}Checking NVIDIA GPU...${NC}"
+GPU_AVAILABLE=false
 if ! command -v nvidia-smi &> /dev/null; then
-    echo -e "${RED}NVIDIA drivers not found or not properly configured!${NC}"
-    echo -e "${YELLOW}Running in CPU-only mode (not recommended)${NC}"
+    echo -e "${YELLOW}NVIDIA drivers not found or not properly configured!${NC}"
+    echo -e "${YELLOW}Running in CPU-only mode (not recommended for performance)${NC}"
 else
-    nvidia-smi || echo -e "${YELLOW}Warning: nvidia-smi failed, but continuing...${NC}"
+    # Try to run nvidia-smi but don't fail if it doesn't work
+    if nvidia-smi &>/dev/null; then
+        echo -e "${GREEN}NVIDIA GPU detected!${NC}"
+        GPU_AVAILABLE=true
+    else
+        echo -e "${YELLOW}nvidia-smi failed, but continuing in CPU-only mode...${NC}"
+    fi
 fi
 
 # Download weights if not already present
@@ -56,12 +63,19 @@ fi
 
 # Parse environment variables for API server
 API_ARGS=""
-if [ "$USE_CPU_OFFLOAD" = "true" ]; then
+if [ "$USE_CPU_OFFLOAD" = "true" ] || [ "$GPU_AVAILABLE" = "false" ]; then
+    echo -e "${BLUE}CPU offloading enabled${NC}"
     API_ARGS="$API_ARGS --use-cpu-offload"
 fi
 
 if [ "$FLOW_REVERSE" = "true" ]; then
     API_ARGS="$API_ARGS --flow-reverse"
+fi
+
+# Force CPU mode if no GPU is available
+if [ "$GPU_AVAILABLE" = "false" ]; then
+    echo -e "${YELLOW}Setting CUDA_VISIBLE_DEVICES=-1 to force CPU mode${NC}"
+    export CUDA_VISIBLE_DEVICES=-1
 fi
 
 # Start the API server

@@ -2,8 +2,9 @@ services:
   hunyuan-api:
     build:
       context: ./hunyuan-docker
-      dockerfile: Dockerfile.minimal
+      dockerfile: Dockerfile.h100
     restart: always
+    runtime: nvidia
     ports:
       - "8000:8000"
     volumes:
@@ -12,22 +13,18 @@ services:
       # You MUST provide a valid Hugging Face token with access to tencent/HunyuanVideo
       # Create one at https://huggingface.co/settings/tokens
       - HF_TOKEN=${HF_TOKEN:-default_token_for_testing}
-      - USE_CPU_OFFLOAD=true
+      - USE_CPU_OFFLOAD=false
       - FLOW_REVERSE=true
       - MODEL_DIR=/root/output/hunyuan-models
-      # Make CPU mode work if no GPU available
-      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
-    # Don't fail if NVIDIA runtime isn't available
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              capabilities: [compute,utility]
-              count: 1
-              options:
-                # Make deployment succeed even if GPU isn't available
-                failIfDriverUnavailable: false
+              count: all
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD-SHELL", "curl -s -f http://localhost:8000/health > /dev/null || exit 1"]
       interval: 30s

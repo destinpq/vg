@@ -15,19 +15,9 @@ services:
       - USE_CPU_OFFLOAD=true
       - FLOW_REVERSE=true
       - MODEL_DIR=/root/output/hunyuan-models
-      # Make CPU mode work if no GPU available
-      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
-    # Don't fail if NVIDIA runtime isn't available
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              capabilities: [compute,utility]
-              count: 1
-              options:
-                # Make deployment succeed even if GPU isn't available
-                failIfDriverUnavailable: false
+      # Force CPU-only mode
+      - NVIDIA_VISIBLE_DEVICES=""
+      - CUDA_VISIBLE_DEVICES=-1
     healthcheck:
       test: ["CMD-SHELL", "curl -s -f http://localhost:8000/health > /dev/null || exit 1"]
       interval: 30s
