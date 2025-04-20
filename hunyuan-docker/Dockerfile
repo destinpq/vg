@@ -46,9 +46,9 @@ RUN pip install -e .
 RUN pip install flask flask-cors requests tqdm huggingface_hub
 
 # Copy API files
-COPY hunyuan_api.py /root/hunyuan-models/
-COPY download_weights.py /root/hunyuan-models/
-COPY entrypoint.sh /root/hunyuan-models/
+COPY hunyuan-docker/hunyuan_api.py /root/hunyuan-models/
+COPY hunyuan-docker/download_weights.py /root/hunyuan-models/
+COPY hunyuan-docker/entrypoint.sh /root/hunyuan-models/
 
 # Make scripts executable
 RUN chmod +x /root/hunyuan-models/entrypoint.sh
