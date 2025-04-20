@@ -1,8 +1,8 @@
 services:
   hunyuan-api:
     build:
-      context: .
-      dockerfile: hunyuan-docker/Dockerfile
+      context: ./hunyuan-docker
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "8000:8000"
