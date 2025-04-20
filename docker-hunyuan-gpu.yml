@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   hunyuan-api:
     build:
@@ -12,7 +10,7 @@ services:
       - hunyuan-weights:/root/hunyuan-models/HunyuanVideo/ckpts
       - ./output:/root/output
     environment:
-      - HF_TOKEN=${HF_TOKEN}
+      - HF_TOKEN=${HF_TOKEN:-default_token_for_testing}
       - USE_CPU_OFFLOAD=true
       - FLOW_REVERSE=true
     deploy:

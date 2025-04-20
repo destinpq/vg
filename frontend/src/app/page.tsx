@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Tabs, Alert } from 'antd';
-import VideoGenerator from '../components/VideoGenerator';
+import VideoGenerator from '../components/video-generator';
 import ConversationGenerator from '../components/ConversationGenerator';
 import ImageToVideoGenerator from '../components/ImageToVideoGenerator';
 
