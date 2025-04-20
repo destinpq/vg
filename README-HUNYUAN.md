@@ -73,6 +73,10 @@ If you see errors about missing model files, check:
 docker-compose -f docker-hunyuan-gpu.yml run hunyuan-api python /root/hunyuan-models/download_weights.py --token $HF_TOKEN --output-dir /root/output/hunyuan-models
 ```
 
+### Error: setup.py or pyproject.toml not found
+
+If you see an error like "does not appear to be a Python project: neither 'setup.py' nor 'pyproject.toml' found", this has been fixed in the latest Dockerfile. The Docker image now installs the required dependencies directly instead of relying on a setup.py file.
+
 ### Git Clone Error
 
 If you see an error about the git clone failing because the directory already exists, you can clean up the container and build again:
