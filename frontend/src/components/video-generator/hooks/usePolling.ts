@@ -9,8 +9,8 @@ interface UsePollingProps {
   isGenerating: boolean;
   setProgress: (progress: number) => void;
   setStatusMessage: (message: string) => void;
-  setApiCallCount: (count: number) => void;
-  setTotalCost: (cost: number) => void;
+  setApiCallCount: (count: number | ((prev: number) => number)) => void;
+  setTotalCost: (cost: number | ((prev: number) => number)) => void;
   setVideoUrl: (url: string) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setDiffusionStep: (step: string) => void;

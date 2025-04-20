@@ -6,9 +6,9 @@ import { VideoCameraOutlined, PictureOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 
 // Import our new components
-import StatusTracker from './StatusTracker';
-import PromptEnhancer from './PromptEnhancer';
-import VideoComparison from './VideoComparison';
+import StatusTracker from './status-tracker';
+import PromptEnhancer from './prompt-enhancer';
+import VideoComparison from './video-comparison';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

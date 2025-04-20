@@ -1,24 +1,31 @@
+# Web frameworks and API
 fastapi==0.104.1
 uvicorn[standard]==0.23.2
 python-multipart==0.0.6
 python-dotenv==1.0.0
 httpx==0.24.1
+flask==2.3.3
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.0
+
+# Data validation and settings
 pydantic==2.4.2
 pydantic-settings==2.0.3
-openai>=1.0.0
+
+# Authentication
 python-jose==3.3.0
+
+# File handling
+aiofiles==23.2.1
 ffmpeg-python>=0.2.0
-requests==2.31.0
 moviepy==1.0.3
 opencv-python==4.8.1.78
-aiofiles==23.2.1
-pytest==7.4.0
-pytest-asyncio==0.21.1
-# Audio processing
-librosa>=0.11.0
-# madmom>=0.16.1  # Commented out due to C extension requirements
-numpy==1.24.3
-cython>=0.25.0
+
+# AI and ML
+openai>=1.0.0
 tqdm==4.66.1
 huggingface-hub>=0.16.0
 transformers>=4.30.0
@@ -27,4 +34,16 @@ safetensors>=0.3.1
 peft>=0.4.0
 xformers>=0.0.20
 triton>=2.0.0
-replicate==0.15.4 
+
+# Audio processing
+librosa>=0.11.0
+numpy==1.24.3
+cython>=0.25.0
+
+# Testing
+pytest==7.4.0
+pytest-asyncio==0.21.1
+
+# External services
+replicate==0.15.4
+requests==2.31.0 

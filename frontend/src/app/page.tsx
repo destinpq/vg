@@ -3,7 +3,7 @@
 import React from 'react';
 import { Tabs, Alert } from 'antd';
 import VideoGenerator from '../components/video-generator';
-import ConversationGenerator from '../components/ConversationGenerator';
+import ConversationGenerator from '../components/conversation-generator';
 import ImageToVideoGenerator from '../components/ImageToVideoGenerator';
 
 const { TabPane } = Tabs;

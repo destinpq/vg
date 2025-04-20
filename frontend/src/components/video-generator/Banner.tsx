@@ -1,18 +1,54 @@
 'use client';
 
 import React from 'react';
+import { Alert, Typography, Space, Tag } from 'antd';
+
+const { Title, Text } = Typography;
 
 export const VideoGeneratorBanner: React.FC = () => {
   return (
-    <div className="mb-4 bg-purple-800 text-white p-3 rounded-lg shadow-lg">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <span className="text-xl mr-2">🚀</span>
-          <h3 className="font-bold text-lg m-0">REPLICATE API MODE</h3>
+    <Alert
+      style={{ 
+        marginBottom: 16, 
+        backgroundColor: '#722ed1', 
+        color: 'white', 
+        padding: 12, 
+        borderRadius: 8
+      }}
+      banner
+      message={
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          width: '100%' 
+        }}>
+          <Space>
+            <span style={{ fontSize: 20, marginRight: 8 }}>🚀</span>
+            <Title level={4} style={{ margin: 0, color: 'white' }}>
+              REPLICATE API MODE
+            </Title>
+          </Space>
+          <Tag style={{ 
+            backgroundColor: '#9254de', 
+            color: 'white', 
+            fontSize: 12,
+            padding: '2px 8px'
+          }}>
+            ₹100 per API call
+          </Tag>
         </div>
-        <div className="text-xs bg-purple-700 px-2 py-1 rounded">₹100 per API call</div>
-      </div>
-      <p className="text-sm mt-1 mb-0">All video generation uses Replicate's H100 GPU (cost tracking enabled)</p>
-    </div>
+      }
+      description={
+        <Text style={{ 
+          fontSize: 14, 
+          color: 'white', 
+          marginTop: 4, 
+          marginBottom: 0 
+        }}>
+          All video generation uses Replicate's H100 GPU (cost tracking enabled)
+        </Text>
+      }
+    />
   );
 }; 
