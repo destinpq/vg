@@ -22,31 +22,40 @@ You need a Hugging Face token to download the model weights:
 export HF_TOKEN=your_token_here
 ```
 
-### 2. Build the Docker Container
+### 2. Prepare the Environment
+
+Run the preparation script which will create necessary directories:
 
 ```bash
-# Use our helper script
-./build-hunyuan.sh
+./prepare-hunyuan.sh
+```
 
-# Or build directly with docker-compose
+This script will:
+- Create the `output/hunyuan-models` directory where models will be stored
+- Create a `.env` file for Docker Compose with your HF_TOKEN
+- Check if HF_TOKEN is set
+
+### 3. Build the Docker Container
+
+```bash
 docker-compose -f docker-hunyuan-gpu.yml build
 ```
 
-### 3. Run the Container
+### 4. Run the Container
 
 ```bash
 docker-compose -f docker-hunyuan-gpu.yml up -d
 ```
 
-The first time you run this, it will download the HunyuanVideo model weights which are several GB in size.
+The first time you run this, it will download the HunyuanVideo model weights which are several GB in size. The models will be saved to your local `./output/hunyuan-models` directory.
 
-### 4. Check the Logs
+### 5. Check the Logs
 
 ```bash
 docker-compose -f docker-hunyuan-gpu.yml logs -f
 ```
 
-### 5. Access the API
+### 6. Access the API
 
 The API will be available at `http://localhost:8000` once the model is loaded.
 
@@ -61,7 +70,16 @@ If you see errors about missing model files, check:
 3. You can manually trigger the download with:
 
 ```bash
-docker-compose -f docker-hunyuan-gpu.yml run hunyuan-api python /root/hunyuan-models/download_weights.py --token $HF_TOKEN
+docker-compose -f docker-hunyuan-gpu.yml run hunyuan-api python /root/hunyuan-models/download_weights.py --token $HF_TOKEN --output-dir /root/output/hunyuan-models
+```
+
+### Git Clone Error
+
+If you see an error about the git clone failing because the directory already exists, you can clean up the container and build again:
+
+```bash
+docker-compose -f docker-hunyuan-gpu.yml down
+docker-compose -f docker-hunyuan-gpu.yml build --no-cache
 ```
 
 ### Memory Issues

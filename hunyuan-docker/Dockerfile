@@ -36,8 +36,11 @@ ENV PATH="/root/venv/bin:$PATH"
 RUN pip install --upgrade pip setuptools wheel && \
     pip install torch==2.1.0 torchvision==0.16.0 --extra-index-url https://download.pytorch.org/whl/cu121
 
-# Clone HunyuanVideo repository
-RUN git clone https://github.com/zsxkib/HunyuanVideo.git /root/hunyuan-models/HunyuanVideo
+# Clone HunyuanVideo repository only if it doesn't exist
+RUN if [ ! -d "/root/hunyuan-models/HunyuanVideo/.git" ]; then \
+      rm -rf /root/hunyuan-models/HunyuanVideo/* && \
+      git clone https://github.com/zsxkib/HunyuanVideo.git /root/hunyuan-models/HunyuanVideo; \
+    fi
 
 # Install HunyuanVideo dependencies
 WORKDIR /root/hunyuan-models/HunyuanVideo

@@ -23,6 +23,9 @@ fi
 CHECKPOINTS_DIR="/root/output/hunyuan-models"
 echo -e "${BLUE}Checking for model weights in $CHECKPOINTS_DIR...${NC}"
 
+# Create the directory if it doesn't exist
+mkdir -p $CHECKPOINTS_DIR
+
 # Check if we need to download weights
 if [ -z "$(ls -A $CHECKPOINTS_DIR 2>/dev/null)" ]; then
     echo -e "${YELLOW}Model weights not found. Downloading...${NC}"
