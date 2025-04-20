@@ -45,10 +45,10 @@ RUN pip install -e .
 # Install additional dependencies
 RUN pip install flask flask-cors requests tqdm huggingface_hub
 
-# Create API wrapper script
-COPY hunyuan_api.py /root/hunyuan-models/
-COPY download_weights.py /root/hunyuan-models/
-COPY entrypoint.sh /root/hunyuan-models/
+# Copy API files
+COPY ./hunyuan_api.py /root/hunyuan-models/
+COPY ./download_weights.py /root/hunyuan-models/
+COPY ./entrypoint.sh /root/hunyuan-models/
 
 # Make scripts executable
 RUN chmod +x /root/hunyuan-models/entrypoint.sh
