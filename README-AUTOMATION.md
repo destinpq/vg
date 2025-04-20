@@ -1,12 +1,12 @@
 # Automated Deployment Scripts for Video Generation
 
-This README explains how to use the automation scripts to push code changes to GitHub and deploy AI Engine changes to your H100 GPU server.
+This README explains how to use the automation scripts to push code changes to GitHub and deploy Python backend and AI Engine changes to your H100 GPU server.
 
 ## Scripts Overview
 
-1. **auto-push.sh**: Automatically commits and pushes changes in backend, frontend, and ai_engine directories to GitHub. Also deploys ai_engine changes to H100 GPU.
+1. **auto-push.sh**: Automatically commits and pushes changes in backend, frontend, and ai_engine directories to GitHub. Also deploys backend and ai_engine changes to H100 GPU.
 
-2. **h100-sync.sh**: Specifically designed to synchronize ai_engine changes to your H100 GPU server. Useful for manual GPU deployments.
+2. **h100-sync.sh**: Specifically designed to synchronize backend and ai_engine changes to your H100 GPU server. Useful for manual GPU deployments.
 
 3. **auto-deploy-service.sh**: Sets up a systemd service that runs the auto-push script automatically on a schedule.
 
@@ -42,6 +42,17 @@ If you haven't already configured SSH access to your H100 server:
 ssh root@your-h100-server-ip
 ```
 
+## Python Backend Information
+
+The Docker configuration has been optimized for a Python backend:
+
+- Uses a Python virtual environment for clean dependency management
+- Includes specific PyTorch installation with CUDA support for the H100 GPU
+- Sets proper Python paths and environment variables
+- Includes health checks to ensure services are running properly
+- Mounts the ai_engine directory as a volume for faster development
+- Includes automatic error log checking after deployments
+
 ## Usage
 
 ### Manual Pushing
@@ -56,11 +67,11 @@ To manually push changes and deploy:
 This will:
 1. Check for changes in backend, frontend, and ai_engine
 2. Commit and push changes to GitHub
-3. Deploy ai_engine changes to your H100 GPU if any were detected
+3. Deploy backend and ai_engine changes to your H100 GPU if any were detected
 
-### Manual AI Engine Sync
+### Manual Backend and AI Engine Sync
 
-To specifically sync ai_engine changes to your H100 GPU:
+To specifically sync backend and ai_engine changes to your H100 GPU:
 
 ```bash
 # Run the H100 sync script
@@ -104,11 +115,29 @@ When working with Cursor AI:
 2. Make changes to backend, frontend, or ai_engine
 3. The auto-push system will detect these changes and:
    - Push them to GitHub
-   - Deploy ai_engine changes to your H100 GPU
+   - Deploy backend and ai_engine changes to your H100 GPU
 
 You can commit manually or let the automated service handle it hourly.
 
 ## Troubleshooting
+
+### Python-specific Issues
+
+If you encounter Python errors:
+
+1. Check container logs: `docker-compose logs backend`
+2. Verify Python dependencies are installed:
+   ```bash
+   docker-compose exec backend pip list
+   ```
+3. Check Python version: 
+   ```bash
+   docker-compose exec backend python --version
+   ```
+4. Check for import errors in logs:
+   ```bash
+   docker-compose logs backend | grep "ImportError"
+   ```
 
 ### Connection Issues to H100 Server
 
@@ -142,4 +171,5 @@ For more advanced setups, you can modify:
 
 - **Sync frequency**: Edit the timer in `auto-deploy-service.sh`
 - **Git commit messages**: Customize in `auto-push.sh`
-- **Deployment options**: Add additional Docker commands in `h100-sync.sh` 
+- **Deployment options**: Add additional Docker commands in `h100-sync.sh`
+- **Python packages**: Edit the Docker files to include additional Python packages 

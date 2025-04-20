@@ -3,7 +3,7 @@
 # This script:
 # 1. Checks for changes in backend, frontend, and ai_engine directories
 # 2. Commits and pushes changes to GitHub
-# 3. Ensures ai_engine changes are deployed to H100 GPU
+# 3. Ensures ai_engine and backend changes are deployed to H100 GPU
 
 set -e  # Exit on any error
 
@@ -60,9 +60,9 @@ commit_and_push() {
   fi
 }
 
-# Function to deploy ai_engine changes to H100 GPU
+# Function to deploy ai_engine and backend changes to H100 GPU
 deploy_to_gpu() {
-  echo -e "${BLUE}Deploying ai_engine changes to H100 GPU...${NC}"
+  echo -e "${BLUE}Deploying changes to H100 GPU...${NC}"
   
   # First check if we can connect to the server
   if ! ssh -q -o BatchMode=yes -o ConnectTimeout=5 $H100_SERVER echo > /dev/null 2>&1; then
@@ -70,15 +70,29 @@ deploy_to_gpu() {
     return 1
   fi
   
-  # Copy the ai_engine directory to the H100 server
-  echo -e "${YELLOW}Copying ai_engine files to H100 server...${NC}"
-  rsync -avz --delete ./ai_engine/ $H100_SERVER:$GPU_APP_DIR/ai_engine/
+  # Check if we should sync ai_engine
+  if [ "$1" == "ai_engine" ] || [ "$1" == "both" ]; then
+    # Copy the ai_engine directory to the H100 server
+    echo -e "${YELLOW}Copying ai_engine files to H100 server...${NC}"
+    rsync -avz --delete ./ai_engine/ $H100_SERVER:$GPU_APP_DIR/ai_engine/
+  fi
+  
+  # Check if we should sync backend
+  if [ "$1" == "backend" ] || [ "$1" == "both" ]; then
+    # Copy the backend directory to the H100 server
+    echo -e "${YELLOW}Copying backend files to H100 server...${NC}"
+    rsync -avz --delete ./backend/ $H100_SERVER:$GPU_APP_DIR/backend/
+  fi
   
   # Restart the container on the H100 server
-  echo -e "${YELLOW}Restarting Docker containers on H100 server...${NC}"
-  ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose down && docker-compose up -d"
+  echo -e "${YELLOW}Rebuilding and restarting Docker containers on H100 server...${NC}"
+  ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose down && docker-compose build backend && docker-compose up -d"
   
-  echo -e "${GREEN}ai_engine changes deployed to H100 GPU successfully!${NC}"
+  echo -e "${GREEN}Changes deployed to H100 GPU successfully!${NC}"
+  
+  # Check container logs for Python errors
+  echo -e "${YELLOW}Checking for Python errors in container logs...${NC}"
+  ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose logs --tail=20 backend | grep -i error || echo 'No errors found in logs'"
 }
 
 # Main execution
@@ -104,19 +118,26 @@ frontend_pushed=$?
 commit_and_push "ai_engine" "AI Engine update: $(date '+%Y-%m-%d %H:%M:%S')"
 ai_engine_pushed=$?
 
-if [ $ai_engine_pushed -eq 0 ]; then
-  # Only deploy to GPU if changes were made to ai_engine
-  deploy_to_gpu
+# Deploy changes to GPU if needed
+if [ $ai_engine_pushed -eq 0 ] && [ $backend_pushed -eq 0 ]; then
+  # Both ai_engine and backend changed
+  deploy_to_gpu "both"
+elif [ $ai_engine_pushed -eq 0 ]; then
+  # Only ai_engine changed
+  deploy_to_gpu "ai_engine"
+elif [ $backend_pushed -eq 0 ]; then
+  # Only backend changed
+  deploy_to_gpu "backend"
 else
-  echo -e "${BLUE}No ai_engine changes to deploy to H100 GPU.${NC}"
+  echo -e "${BLUE}No backend or ai_engine changes to deploy to H100 GPU.${NC}"
 fi
 
 # Summary
 echo -e "\n${GREEN}=== Summary ===${NC}"
 if [ $backend_pushed -eq 0 ] || [ $frontend_pushed -eq 0 ] || [ $ai_engine_pushed -eq 0 ]; then
   echo -e "${GREEN}Changes successfully pushed to GitHub.${NC}"
-  if [ $ai_engine_pushed -eq 0 ]; then
-    echo -e "${GREEN}AI Engine changes deployed to H100 GPU.${NC}"
+  if [ $ai_engine_pushed -eq 0 ] || [ $backend_pushed -eq 0 ]; then
+    echo -e "${GREEN}Changes deployed to H100 GPU.${NC}"
   fi
 else
   echo -e "${YELLOW}No changes detected in any directories.${NC}"

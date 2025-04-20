@@ -1,6 +1,6 @@
 #!/bin/bash
 # H100 GPU Sync Script for AI Engine
-# This script synchronizes ai_engine changes directly to the H100 GPU server
+# This script synchronizes ai_engine and backend changes directly to the H100 GPU server
 # and updates the Docker containers
 
 set -e  # Exit on any error
@@ -9,6 +9,7 @@ set -e  # Exit on any error
 H100_SERVER="root@your-h100-server-ip"  # Replace with your H100 server IP
 GPU_APP_DIR="/root/video-generation"     # App directory on H100 server
 LOCAL_AI_ENGINE_DIR="$(pwd)/ai_engine"   # Local ai_engine directory
+LOCAL_BACKEND_DIR="$(pwd)/backend"       # Local backend directory
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -17,11 +18,16 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== H100 GPU Sync Tool for AI Engine ===${NC}"
+echo -e "${GREEN}=== H100 GPU Sync Tool for AI Engine & Backend ===${NC}"
 
-# Check if the ai_engine directory exists
+# Check if the required directories exist
 if [ ! -d "$LOCAL_AI_ENGINE_DIR" ]; then
   echo -e "${RED}Error: ai_engine directory not found at $LOCAL_AI_ENGINE_DIR${NC}"
+  exit 1
+fi
+
+if [ ! -d "$LOCAL_BACKEND_DIR" ]; then
+  echo -e "${RED}Error: backend directory not found at $LOCAL_BACKEND_DIR${NC}"
   exit 1
 fi
 
@@ -46,6 +52,10 @@ ssh $H100_SERVER "mkdir -p $GPU_APP_DIR"
 echo -e "${YELLOW}Synchronizing ai_engine to H100 server...${NC}"
 rsync -avz --delete $LOCAL_AI_ENGINE_DIR/ $H100_SERVER:$GPU_APP_DIR/ai_engine/
 
+# Sync backend directory to H100 server
+echo -e "${YELLOW}Synchronizing backend to H100 server...${NC}"
+rsync -avz --delete $LOCAL_BACKEND_DIR/ $H100_SERVER:$GPU_APP_DIR/backend/
+
 # Check if Docker is installed on H100 server
 echo -e "${BLUE}Checking Docker installation on H100 server...${NC}"
 if ! ssh $H100_SERVER "command -v docker > /dev/null && command -v docker-compose > /dev/null"; then
@@ -55,13 +65,21 @@ if ! ssh $H100_SERVER "command -v docker > /dev/null && command -v docker-compos
 fi
 
 # Restart Docker containers on H100 server
-echo -e "${YELLOW}Restarting Docker containers on H100 server...${NC}"
-ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose down && docker-compose build && docker-compose up -d"
+echo -e "${YELLOW}Rebuilding and restarting Docker containers on H100 server...${NC}"
+ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose down && docker-compose build backend && docker-compose up -d"
 
-echo -e "${GREEN}AI Engine successfully synchronized with H100 GPU server!${NC}"
+echo -e "${GREEN}AI Engine and Backend successfully synchronized with H100 GPU server!${NC}"
 echo -e "${BLUE}Container status on H100 server:${NC}"
 ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose ps"
 
+# Check logs for any python errors
+echo -e "${BLUE}Checking for Python errors in logs:${NC}"
+ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose logs --tail=20 backend | grep -i error"
+
 # Optional GPU status check
 echo -e "${BLUE}GPU status on H100 server:${NC}"
-ssh $H100_SERVER "nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader" 
+ssh $H100_SERVER "nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader"
+
+# Python package status
+echo -e "${BLUE}Installed Python packages in container:${NC}"
+ssh $H100_SERVER "cd $GPU_APP_DIR && docker-compose exec backend pip list | grep -E 'torch|numpy|opencv'" 

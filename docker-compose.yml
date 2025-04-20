@@ -11,17 +11,27 @@ services:
     volumes:
       - ./output:/app/output
       - ./models:/app/models
+      - ./ai_engine:/app/ai_engine  # Mount for development
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - FRONTEND_URL=http://frontend:3000
       - MODEL_CACHE_DIR=/app/models
+      - PYTHONPATH=/app
+      - DEBUG=1
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
               capabilities: [gpu]
-    command: python3 main.py
+              count: all
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: python main.py
 
   frontend:
     build:
@@ -32,5 +42,17 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:5001
+      - NODE_ENV=production
     depends_on:
-      - backend 
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  default:
+    driver: bridge 
