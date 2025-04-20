@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, RedirectResponse
-from app.routes import video, lyrics, audio, upload
+from app.routes import video, lyrics, audio, upload, hunyuan
 from app.utils.config import get_settings, verify_settings
 from app.services.video_queue import video_queue # Import queue
 from pathlib import Path
@@ -43,6 +43,14 @@ else:
 # Load and verify settings
 settings = get_settings()
 verify_settings()
+
+# Check for the Hunyuan API URL
+hunyuan_api_url = os.environ.get("HUNYUAN_API_URL")
+if hunyuan_api_url:
+    print(f"Hunyuan API URL: {hunyuan_api_url}")
+else:
+    print("Warning: HUNYUAN_API_URL environment variable not set. Defaulting to http://localhost:8000")
+    os.environ["HUNYUAN_API_URL"] = "http://localhost:8000"
 
 # Create output directory if it doesn't exist
 output_dir = Path(settings.OUTPUT_DIR)
@@ -93,6 +101,7 @@ app.include_router(video.router, prefix="/video", tags=["Video Generation"])
 app.include_router(lyrics.router, prefix="/lyrics", tags=["Lyrics Generation"])
 app.include_router(audio.router, prefix="/audio", tags=["Audio Analysis"])
 app.include_router(upload.router, prefix="/upload", tags=["File Upload"])
+app.include_router(hunyuan.router, prefix="/hunyuan", tags=["Hunyuan Video Generation"])
 
 # Add a catch-all route for direct video file requests
 @app.get("/{video_id:path}")
@@ -163,6 +172,10 @@ async def root():
             "audio": {
                 "beats": "/audio/beats",
                 "analyze": "/audio/analyze"
+            },
+            "hunyuan": {
+                "status": "/hunyuan/status",
+                "generate": "/hunyuan/generate"
             }
         }
     }
