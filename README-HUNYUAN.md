@@ -91,4 +91,29 @@ docker-compose -f docker-hunyuan-gpu.yml build --no-cache
 If you encounter memory issues, try:
 
 1. Make sure USE_CPU_OFFLOAD=true is set in the docker-compose file
-2. Consider using the FP8 quantized weights (see Hugging Face repository for details) 
+2. Consider using the FP8 quantized weights (see Hugging Face repository for details)
+
+## Minimal Setup (Alternative)
+
+If you're having issues with the standard setup, you can try the minimal version that doesn't rely on external Git repositories:
+
+### 1. Prepare the minimal setup
+
+```bash
+# Use the same preparation script
+./prepare-hunyuan.sh
+
+# Copy minimal files to the right locations
+cp hunyuan-docker/Dockerfile.minimal hunyuan-docker/Dockerfile
+cp hunyuan-docker/entrypoint.minimal.sh hunyuan-docker/entrypoint.sh
+cp hunyuan-docker/download_weights.minimal.py hunyuan-docker/download_weights.py
+```
+
+### 2. Build and run the minimal container
+
+```bash
+docker-compose -f docker-hunyuan-minimal.yml build
+docker-compose -f docker-hunyuan-minimal.yml up -d
+```
+
+This minimal setup includes all necessary dependencies without attempting to clone any external repositories. 

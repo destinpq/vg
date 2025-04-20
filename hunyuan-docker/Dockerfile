@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 # Create necessary directories
 RUN mkdir -p /root/hunyuan-models/HunyuanVideo/ckpts \
     && mkdir -p /root/hunyuan-models/huggingface \
-    && mkdir -p /root/output
+    && mkdir -p /root/output/hunyuan-models
 
 # Set up working directory
 WORKDIR /root/hunyuan-models
@@ -39,7 +39,7 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Clone HunyuanVideo repository only if it doesn't exist
 RUN if [ ! -d "/root/hunyuan-models/HunyuanVideo/.git" ]; then \
       rm -rf /root/hunyuan-models/HunyuanVideo/* && \
-      git clone https://github.com/Tencent/HunyuanVideo.git /root/hunyuan-models/HunyuanVideo; \
+      git clone https://github.com/Tencent/HunyuanVideo.git /root/hunyuan-models/HunyuanVideo || echo "Git clone failed, will install dependencies directly"; \
     fi
 
 # Install HunyuanVideo dependencies
@@ -47,12 +47,17 @@ WORKDIR /root/hunyuan-models/HunyuanVideo
 
 # Check if setup.py exists before trying to install in editable mode
 RUN if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then \
-      pip install -e .; \
+      pip install -e . || echo "Failed to install via setup.py, installing dependencies directly"; \
+      if [ $? -ne 0 ]; then \
+        pip install accelerate diffusers transformers safetensors einops decord timm pillow \
+                ffmpeg-python opencv-python imageio imageio-ffmpeg open_clip_torch ftfy \
+                omegaconf peft bitsandbytes fairscale xformers; \
+      fi; \
     else \
       echo "No setup.py or pyproject.toml found. Installing dependencies directly."; \
       pip install accelerate diffusers transformers safetensors einops decord timm pillow \
                 ffmpeg-python opencv-python imageio imageio-ffmpeg open_clip_torch ftfy \
-                omegaconf peft bitsandbytes fairscale xformers torchvision; \
+                omegaconf peft bitsandbytes fairscale xformers; \
     fi
 
 # Install additional dependencies
