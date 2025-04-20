@@ -1,0 +1,5 @@
+sk-proj-.*
+OPENAI_API_KEY=.*
+"OPENAI_API_KEY": ".*"
+os\.environ\["OPENAI_API_KEY"\] = ".*"
+\$env:OPENAI_API_KEY = ".*" 

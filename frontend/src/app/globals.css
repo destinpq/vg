@@ -1,0 +1,297 @@
+/* Add these styles to the end of your globals.css file */
+
+/* Advanced options styling */
+.advanced-toggle {
+  margin-bottom: 15px;
+}
+
+.toggle-button {
+  background-color: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-button:hover {
+  background-color: #f1f1f1;
+  border-color: #999;
+}
+
+.advanced-options {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+/* Human focus styling */
+.human-focus-enabled {
+  background-color: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.human-focus-disabled {
+  background-color: rgba(255, 69, 0, 0.05);
+  border: 1px solid rgba(255, 69, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.human-focus-switch.ant-switch-checked {
+  background-color: #4CAF50 !important;
+}
+
+.human-focus-button {
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.human-focus-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.human-examples {
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.human-examples ul {
+  margin-left: 20px;
+  padding-left: 0;
+}
+
+.human-examples li {
+  margin-bottom: 4px;
+}
+
+/* Progress bar styling */
+.generating-container {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eaeaea;
+}
+
+.generating-message {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #444;
+}
+
+.progress-container {
+  margin-top: 15px;
+}
+
+.progress-bar {
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4cc9f0, #4361ee);
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.progress-info {
+  font-size: 14px;
+  color: #666;
+  text-align: right;
+}
+
+/* New UI Components Styling */
+
+/* Status Tracker */
+.status-tracker {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.status-tracker .ant-card-body {
+  padding: 20px;
+}
+
+.status-tracker .log-timeline {
+  position: relative;
+  padding-right: 10px;
+}
+
+.status-tracker .log-timeline::-webkit-scrollbar {
+  width: 6px;
+}
+
+.status-tracker .log-timeline::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.status-tracker .log-timeline::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 10px;
+}
+
+.status-tracker .log-timeline::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+.status-tracker .ant-timeline-item-tail {
+  border-left: 2px solid #e8e8e8;
+}
+
+.status-tracker .ant-timeline-item-content {
+  padding-bottom: 20px;
+}
+
+.status-tracker .prompt-display {
+  background: linear-gradient(to right, rgba(113, 46, 209, 0.02), rgba(113, 46, 209, 0.08));
+  border: 1px solid rgba(113, 46, 209, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+/* Prompt Enhancer */
+.prompt-enhancer .prompt-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.prompt-enhancer .prompt-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.prompt-enhancer .ant-tag {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 6px;
+}
+
+.prompt-enhancer .ant-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-enhancer .prompt-textarea {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border-color: #d9d9d9;
+}
+
+.prompt-enhancer .prompt-textarea:hover {
+  border-color: #40a9ff;
+}
+
+.prompt-enhancer .prompt-textarea:focus {
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.prompt-enhancer .enhanced-display {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Video Comparison */
+.video-comparison .result-card {
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.video-comparison.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-comparison .comparison-container {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-comparison .result-actions {
+  padding-top: 10px;
+}
+
+.video-comparison .result-actions .ant-btn {
+  transition: all 0.3s ease;
+}
+
+.video-comparison .result-actions .ant-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animate result appearance */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-column > * {
+  animation: slideUp 0.5s ease;
+}
+
+/* Empty state styling */
+.empty-state {
+  border: 1px dashed #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+  border-color: #40a9ff;
+  background-color: rgba(24, 144, 255, 0.03);
+}
+
+/* Subtle animations for icons */
+.ant-btn-icon-only {
+  transition: transform 0.3s ease;
+}
+
+.ant-btn-icon-only:hover {
+  transform: rotate(15deg);
+}
+
+/* Input fields focus states */
+.ant-input:focus, 
+.ant-input-focused,
+.ant-select-focused .ant-select-selector {
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+} 
