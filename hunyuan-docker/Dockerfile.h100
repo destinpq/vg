@@ -12,6 +12,10 @@ ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
 ENV MODEL_DIR=/root/output/hunyuan-models
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
+# Fix for library mismatch for H100
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu
+# Ensure NVML loads the correct library version
+ENV CUDA_NVML_LIBRARY=/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \

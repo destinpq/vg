@@ -9,6 +9,8 @@ services:
       - "8000:8000"
     volumes:
       - ./output:/root/output
+      - /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+      - /usr/lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1
     environment:
       # You MUST provide a valid Hugging Face token with access to tencent/HunyuanVideo
       # Create one at https://huggingface.co/settings/tokens
@@ -18,6 +20,8 @@ services:
       - MODEL_DIR=/root/output/hunyuan-models
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
+      - NVIDIA_REQUIRE_CUDA=cuda>=12.0
+      - LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:/usr/lib/x86_64-linux-gnu
     deploy:
       resources:
         reservations:
@@ -25,6 +29,8 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+              options:
+                failIfDriverUnavailable: false
     healthcheck:
       test: ["CMD-SHELL", "curl -s -f http://localhost:8000/health > /dev/null || exit 1"]
       interval: 30s
