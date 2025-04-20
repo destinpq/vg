@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Check if HF_TOKEN is set
+if [ -z "${HF_TOKEN}" ]; then
+  echo "Warning: HF_TOKEN environment variable is not set!"
+  echo "You need a Hugging Face token with access to tencent/HunyuanVideo"
+  echo "Create one at https://huggingface.co/settings/tokens"
+  echo "Then set it with: export HF_TOKEN=your_token_here"
+  echo "Continuing build, but model weights download may fail later..."
+  echo ""
+fi
+
 echo "Creating temporary build directory..."
 rm -rf .build-hunyuan
 mkdir -p .build-hunyuan

@@ -10,6 +10,8 @@ services:
       - hunyuan-weights:/root/hunyuan-models/HunyuanVideo/ckpts
       - ./output:/root/output
     environment:
+      # You MUST provide a valid Hugging Face token with access to tencent/HunyuanVideo
+      # Create one at https://huggingface.co/settings/tokens
       - HF_TOKEN=${HF_TOKEN:-default_token_for_testing}
       - USE_CPU_OFFLOAD=true
       - FLOW_REVERSE=true
