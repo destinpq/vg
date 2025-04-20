@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./output:/app/output
+      - ./models:/app/models
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - FRONTEND_URL=http://frontend:3000
+      - MODEL_CACHE_DIR=/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    command: python3 main.py
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:5001
+    depends_on:
+      - backend 
