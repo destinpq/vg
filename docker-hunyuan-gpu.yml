@@ -7,7 +7,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - hunyuan-weights:/root/hunyuan-models/HunyuanVideo/ckpts
       - ./output:/root/output
     environment:
       # You MUST provide a valid Hugging Face token with access to tencent/HunyuanVideo
@@ -27,8 +26,4 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
-
-volumes:
-  hunyuan-weights:
-    driver: local 
+      start_period: 60s 

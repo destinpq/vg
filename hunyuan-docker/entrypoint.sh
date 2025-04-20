@@ -20,7 +20,7 @@ else
 fi
 
 # Download weights if not already present
-CHECKPOINTS_DIR="/root/hunyuan-models/HunyuanVideo/ckpts"
+CHECKPOINTS_DIR="/root/output/hunyuan-models"
 echo -e "${BLUE}Checking for model weights in $CHECKPOINTS_DIR...${NC}"
 
 # Check if we need to download weights

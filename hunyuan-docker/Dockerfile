@@ -9,6 +9,7 @@ ENV FLOW_REVERSE=true
 ENV USE_CPU_OFFLOAD=true
 ENV HF_HOME=/root/hunyuan-models/huggingface
 ENV HF_HUB_DISABLE_SYMLINKS_WARNING=1
+ENV MODEL_DIR=/root/output/hunyuan-models
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
