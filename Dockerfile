@@ -45,18 +45,8 @@ COPY run_server.py /app/
 # Create necessary directories
 RUN mkdir -p /app/output /app/outputs
 
-# Install frontend dependencies and build
-COPY frontend/ ./frontend/
-WORKDIR /app/frontend
-RUN npm install
-RUN npm run build
-
-# Set the working directory back to the root directory
-WORKDIR /app
-
 # Expose the API port
 EXPOSE 5001
-EXPOSE 3000
 
 # Run the backend server
 CMD ["python", "main.py"] 

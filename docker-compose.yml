@@ -12,6 +12,7 @@ services:
       - ./output:/app/output
       - ./models:/app/models
       - ./ai_engine:/app/ai_engine  # Mount for development
+      - ./backend:/app/backend      # Mount for development
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - FRONTEND_URL=http://frontend:3000
