@@ -11,11 +11,14 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-MODEL_DIR="/root/hunyuan-models"
-VENV_DIR="/root/hunyuan-venv"
+BASE_DIR="/root"
+MODEL_DIR="$BASE_DIR/hunyuan-models"
+VENV_DIR="$BASE_DIR/hunyuan-venv"
+REPO_DIR="$MODEL_DIR/HunyuanVideo"
+CKPTS_DIR="$REPO_DIR/ckpts"
 HF_TOKEN="" # Add your Hugging Face token if the model is gated
 
-echo -e "${GREEN}=== Setting up Tencent Hunyuan Model on H100 GPU ===${NC}"
+echo -e "${GREEN}=== Setting up Tencent Hunyuan Video Model on H100 GPU ===${NC}"
 
 # Install system dependencies
 echo -e "${BLUE}Installing system dependencies...${NC}"
@@ -28,6 +31,7 @@ apt-get update && apt-get install -y \
 # Create model directory
 echo -e "${BLUE}Creating model directory...${NC}"
 mkdir -p $MODEL_DIR
+mkdir -p $CKPTS_DIR
 
 # Check NVIDIA GPU
 echo -e "${BLUE}Checking NVIDIA GPU...${NC}"
@@ -49,7 +53,16 @@ source $VENV_DIR/bin/activate
 echo -e "${BLUE}Installing Python dependencies...${NC}"
 pip install --upgrade pip setuptools wheel
 pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
-pip install flask flask-cors transformers diffusers accelerate xformers safetensors huggingface_hub
+pip install flask flask-cors safetensors huggingface_hub
+
+# Clone HunyuanVideo repository
+echo -e "${BLUE}Cloning HunyuanVideo repository...${NC}"
+git clone https://github.com/zsxkib/HunyuanVideo.git $REPO_DIR
+cd $REPO_DIR
+
+# Install the repository requirements
+echo -e "${BLUE}Installing HunyuanVideo requirements...${NC}"
+pip install -e .
 
 # Set up HF token if provided
 if [ ! -z "$HF_TOKEN" ]; then
@@ -57,15 +70,21 @@ if [ ! -z "$HF_TOKEN" ]; then
     huggingface-cli login --token $HF_TOKEN
 fi
 
-# Clone run_hunyuan_api.py file from the backend
-echo -e "${BLUE}Copying Hunyuan API code...${NC}"
-if [ -f "/root/video-generation/backend/run_hunyuan_api.py" ]; then
-    cp /root/video-generation/backend/run_hunyuan_api.py $MODEL_DIR/
-else
-    echo -e "${YELLOW}run_hunyuan_api.py not found. Will create a new one.${NC}"
-    
-    # Create a basic Hunyuan API script
-    cat > $MODEL_DIR/run_hunyuan_api.py << 'EOF'
+# Download model weights
+echo -e "${BLUE}Downloading model weights...${NC}"
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='Tencent/hunyuan-2-video',
+    local_dir='./ckpts',
+    local_dir_use_symlinks=False,
+    token='$HF_TOKEN'
+)
+"
+
+# Create a Flask API wrapper for the model
+echo -e "${BLUE}Creating Flask API for Hunyuan...${NC}"
+cat > $MODEL_DIR/hunyuan_api.py << 'EOF'
 #!/usr/bin/env python3
 """
 Flask API server for Tencent Hunyuan model running on H100 GPU
@@ -75,12 +94,17 @@ import time
 import torch
 import base64
 import logging
+import argparse
+import numpy as np
 from io import BytesIO
 from PIL import Image
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from diffusers import AutoPipelineForText2Video
+import sys
+
+# Add the Hunyuan repository to path
+sys.path.append("/root/hunyuan-models/HunyuanVideo")
+from hyvideo.pipelines.hunyuan_video_pipeline import HunyuanVideoPipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -90,23 +114,35 @@ app = Flask(__name__)
 CORS(app)
 
 # Model configuration
-MODEL_ID = "Tencent/hunyuan-2-video"  # Replace with actual model ID if different
+MODEL_DIR = "/root/hunyuan-models/HunyuanVideo/ckpts"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MAX_MEMORY = {0: "70GiB"}  # For H100 80GB, allocate 70GB
 
-# Initialize models and pipelines
-logger.info(f"Loading model {MODEL_ID} on {DEVICE}")
-text2video_pipe = None
+# Initialize pipeline
+pipe = None
 
-def initialize_model():
-    global text2video_pipe
-    text2video_pipe = AutoPipelineForText2Video.from_pretrained(
-        MODEL_ID,
-        torch_dtype=torch.float16,
-        device_map="auto",
-        max_memory=MAX_MEMORY,
-    )
-    logger.info("Model loaded successfully")
+def initialize_model(use_cpu_offload=False, flow_reverse=True):
+    global pipe
+    logger.info(f"Loading Hunyuan model from {MODEL_DIR} on {DEVICE}")
+    
+    try:
+        pipe = HunyuanVideoPipeline.from_pretrained(
+            MODEL_DIR,
+            device_map="auto" if use_cpu_offload else DEVICE,
+            torch_dtype=torch.float16,
+        )
+        
+        # Configure flow direction
+        pipe.scheduler.flow_reverse = flow_reverse
+        
+        if use_cpu_offload and DEVICE == "cuda":
+            pipe.enable_model_cpu_offload()
+        
+        logger.info("Model loaded successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error loading model: {str(e)}")
+        return False
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -122,7 +158,7 @@ def health_check():
     
     return jsonify({
         "status": "healthy",
-        "model_loaded": text2video_pipe is not None,
+        "model_loaded": pipe is not None,
         "gpu_available": torch.cuda.is_available(),
         "gpu_info": gpu_info,
         "server_time": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -138,16 +174,43 @@ def generate_video():
         if not prompt:
             return jsonify({"error": "No prompt provided"}), 400
         
-        logger.info(f"Generating video for prompt: {prompt}")
+        # Get optional parameters
+        width = data.get('width', 576)
+        height = data.get('height', 320)
+        num_inference_steps = data.get('num_inference_steps', 50)
+        video_length = data.get('video_length', 129)  # Default from the repo
+        flow_reverse = data.get('flow_reverse', True)
+        embedded_cfg_scale = data.get('embedded_cfg_scale', 6.0)
+        seed = data.get('seed')
+        output_format = data.get('output_format', "gif")
+        
+        # Set seed if provided
+        if seed is not None:
+            generator = torch.Generator(device=DEVICE).manual_seed(seed)
+        else:
+            generator = None
+        
+        logger.info(f"Generating video for prompt: '{prompt}'")
+        logger.info(f"Parameters: width={width}, height={height}, steps={num_inference_steps}, length={video_length}")
         
         # Generate the video
         start_time = time.time()
-        video_frames = text2video_pipe(prompt, num_inference_steps=50, height=320, width=576).frames
         
-        # Save as gif for easy transmission (can be changed to mp4 if needed)
+        with torch.inference_mode():
+            video_frames = pipe(
+                prompt=prompt,
+                video_length=video_length,
+                width=width,
+                height=height,
+                num_inference_steps=num_inference_steps,
+                embedded_cfg_scale=embedded_cfg_scale,
+                generator=generator,
+            ).frames
+        
+        # Save the video
         video_path = f"/tmp/generated_video_{int(time.time())}.gif"
         
-        # PIL requires a list of PIL Images
+        # Convert frames to PIL images
         pil_frames = [Image.fromarray(frame) for frame in video_frames]
         
         # Save as GIF
@@ -159,7 +222,7 @@ def generate_video():
             loop=0,
         )
         
-        # Optionally encode as base64 for direct transmission
+        # Encode as base64 for direct transmission
         with open(video_path, "rb") as f:
             video_bytes = f.read()
         
@@ -173,6 +236,14 @@ def generate_video():
             "video_path": video_path,
             "video_base64": video_b64,
             "generation_time_seconds": generation_time,
+            "parameters": {
+                "width": width,
+                "height": height,
+                "num_inference_steps": num_inference_steps,
+                "video_length": video_length,
+                "embedded_cfg_scale": embedded_cfg_scale,
+                "seed": seed
+            }
         })
     
     except Exception as e:
@@ -180,33 +251,42 @@ def generate_video():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Initialize the model
-    initialize_model()
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='Run Hunyuan Video API server')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='Host to bind')
+    parser.add_argument('--port', type=int, default=8000, help='Port to bind')
+    parser.add_argument('--use-cpu-offload', action='store_true', help='Enable CPU offloading to save GPU memory')
+    parser.add_argument('--flow-reverse', action='store_true', help='Use reverse flow matching')
+    args = parser.parse_args()
     
-    # Start the Flask server
-    logger.info("Starting Flask server")
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    # Initialize the model
+    if initialize_model(args.use_cpu_offload, args.flow_reverse):
+        # Start the Flask server
+        logger.info(f"Starting Flask server on {args.host}:{args.port}")
+        app.run(host=args.host, port=args.port, debug=False)
+    else:
+        logger.error("Failed to initialize model. Exiting.")
+        sys.exit(1)
 EOF
-fi
 
 # Create a systemd service file for the API
 echo -e "${BLUE}Creating systemd service for Hunyuan API...${NC}"
 cat > /etc/systemd/system/hunyuan-api.service << EOF
 [Unit]
-Description=Hunyuan API Service
+Description=Hunyuan Video API Service
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=$MODEL_DIR
-ExecStart=$VENV_DIR/bin/python $MODEL_DIR/run_hunyuan_api.py
+ExecStart=$VENV_DIR/bin/python $MODEL_DIR/hunyuan_api.py --use-cpu-offload --flow-reverse
 Restart=on-failure
 RestartSec=10
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=hunyuan-api
-Environment="PYTHONPATH=$MODEL_DIR"
+Environment="PYTHONPATH=$REPO_DIR"
 
 [Install]
 WantedBy=multi-user.target
@@ -218,7 +298,7 @@ cat > $MODEL_DIR/start-hunyuan-api.sh << EOF
 #!/bin/bash
 source $VENV_DIR/bin/activate
 cd $MODEL_DIR
-python run_hunyuan_api.py
+python hunyuan_api.py --use-cpu-offload --flow-reverse
 EOF
 
 chmod +x $MODEL_DIR/start-hunyuan-api.sh
@@ -233,7 +313,7 @@ systemctl start hunyuan-api.service
 echo -e "${BLUE}Checking service status...${NC}"
 systemctl status hunyuan-api.service
 
-echo -e "${GREEN}=== Hunyuan Model Setup Complete! ===${NC}"
+echo -e "${GREEN}=== Hunyuan Video Model Setup Complete! ===${NC}"
 echo -e "${YELLOW}The Hunyuan API is running at: http://localhost:8000${NC}"
 echo -e "${YELLOW}Test endpoints:${NC}"
 echo -e "  - Health check: curl http://localhost:8000/health"

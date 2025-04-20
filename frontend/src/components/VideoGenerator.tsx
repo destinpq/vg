@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, Progress, Card, Alert, Select, Spin, Slider, Row, Col, Space, Typography, Switch, Modal, Tooltip } from 'antd';
-import { CloudUploadOutlined, VideoCameraOutlined, LoadingOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Input, Button, Progress, Card, Alert, Select, Spin, Slider, Row, Col, Space, Typography, Switch, Modal, Tooltip, Badge, Tag } from 'antd';
+import { CloudUploadOutlined, VideoCameraOutlined, LoadingOutlined, InfoCircleOutlined, QuestionCircleOutlined, RocketOutlined } from '@ant-design/icons';
 import VideoPlayer from './VideoPlayer';
+import CostHistory from './CostHistory';
 
 // FORCE REPLICATE MODE
 console.log("🚀 RUNNING IN REPLICATE-ONLY MODE");
@@ -77,6 +78,7 @@ export default function VideoGenerator() {
   const [eta, setEta] = useState('');
   const [apiCallCount, setApiCallCount] = useState(0); // Track number of API calls
   const [diffusionStep, setDiffusionStep] = useState(''); // Track current diffusion step
+  const [totalCost, setTotalCost] = useState(0); // Track total cost (100 rupees per call)
   
   // Advanced settings
   const [duration, setDuration] = useState(5);  // 5 seconds default
@@ -104,6 +106,8 @@ export default function VideoGenerator() {
       try {
         // Increment API call counter to show all requests being made
         setApiCallCount(prev => prev + 1);
+        // Update total cost (100 rupees per API call)
+        setTotalCost(prev => prev + 100);
         
         // Use the new job-status endpoint
         const response = await apiCall(`/video/job-status/${currentVideoId}`);
@@ -201,6 +205,7 @@ export default function VideoGenerator() {
     setProgress(0);
     setApiCallCount(0); // Reset API call counter
     setDiffusionStep(''); // Reset diffusion step
+    setTotalCost(100); // Initial API call costs 100 rupees
     setStatusMessage(usePremium ? 
       'Submitting your request with PREMIUM quality...' : 
       'Submitting your request...');
@@ -461,320 +466,210 @@ export default function VideoGenerator() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* REPLICATE ONLY MODE BANNER */}
+      {/* Cost display badge */}
+      <div className="cost-badge">
+        <Badge.Ribbon 
+          text={
+            <span className="cost-value">
+              ₹{totalCost}
+            </span>
+          } 
+          color="#722ed1"
+        >
+          <Card className="text-center" style={{ width: 180 }}>
+            <div className="cost-card-content">
+              <div className="cost-label font-semibold">Total Server Cost</div>
+              <div className="cost-label mt-1">{apiCallCount} API calls</div>
+            </div>
+          </Card>
+        </Badge.Ribbon>
+      </div>
+      
+      {/* Replicate mode banner with cost notice */}
       <div className="mb-4 bg-purple-800 text-white p-3 rounded-lg shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <span className="text-xl mr-2">🚀</span>
-            <h3 className="font-bold text-lg m-0">REPLICATE API ONLY MODE</h3>
+            <h3 className="font-bold text-lg m-0">REPLICATE API MODE</h3>
           </div>
-          <div className="text-xs bg-purple-700 px-2 py-1 rounded">HUNYUAN DISABLED</div>
+          <div className="text-xs bg-purple-700 px-2 py-1 rounded">₹100 per API call</div>
         </div>
-        <p className="text-sm mt-1 mb-0">All video generation uses Replicate's H100 GPU (50 network calls)</p>
+        <p className="text-sm mt-1 mb-0">All video generation uses Replicate's H100 GPU (cost tracking enabled)</p>
       </div>
       
       <Card className="shadow-lg rounded-lg">
         <div className="flex justify-between items-center mb-6">
-          <Title level={2} className="m-0">Pika Labs Video Generator</Title>
-          <Button 
-            type="text" 
-            icon={<QuestionCircleOutlined style={{ fontSize: '22px' }} />} 
-            onClick={() => setShowHelpModal(true)}
-            size="large"
-          />
+          <Title level={2} className="m-0">Video Generator</Title>
+          <Space>
+            <CostHistory currentSessionCost={totalCost} currentSessionCalls={apiCallCount} />
+            <Tag color="purple">Cost: ₹100/request</Tag>
+            <Button 
+              type="text" 
+              icon={<QuestionCircleOutlined style={{ fontSize: '22px' }} />} 
+              onClick={() => setShowHelpModal(true)}
+              size="large"
+            />
+          </Space>
         </div>
         
         <Alert
-          message="Premium Pika Labs Video Generation"
+          message="AI Video Generation"
           description={
             <div>
-              <p className="mb-2">This application uses Pika Labs HD for high-quality video generation. For best results:</p>
+              <p className="mb-2">Generate high-quality AI videos from your text descriptions:</p>
               <ol className="list-decimal ml-5">
                 <li className="mb-1">Enter a detailed prompt describing what you want to see</li>
                 <li className="mb-1">Set your desired duration and quality</li>
-                <li className="mb-1">Click the "Generate with Pika Labs" button</li>
+                <li className="mb-1">Click the "Generate Video" button</li>
+                <li className="mb-1 text-purple-700 font-semibold">Each server request costs ₹100</li>
               </ol>
             </div>
           }
           type="info"
           showIcon
-          className="mb-4"
         />
         
-        <div className="space-y-6">
-          <div>
-            <Text strong>Describe what you want to see:</Text>
-            <Input.TextArea
-              rows={4}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter a detailed description of the video you want to generate..."
-              className="mt-2"
-              disabled={isGenerating}
-            />
-          </div>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Text strong>Video Duration (seconds):</Text>
+        <div className="mt-6">
+          <Text strong>Enter your video description:</Text>
+          <Input.TextArea
+            rows={4}
+            placeholder="Describe the video you want to generate in detail..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            disabled={isGenerating}
+            className="mt-2"
+          />
+          
+          <div className="flex justify-between items-center mt-4">
+            <Button
+              type="primary"
+              size="large"
+              icon={<VideoCameraOutlined />}
+              onClick={(e) => handleSubmit(e)}
+              loading={isGenerating}
+              disabled={!prompt.trim() || isGenerating}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              Generate Video
+            </Button>
+            
+            <Space>
+              <Text>Duration: {duration}s</Text>
               <Slider
-                min={5}
+                min={2}
                 max={10}
-                onChange={(value) => setDuration(value)}
                 value={duration}
+                onChange={setDuration}
                 disabled={isGenerating}
-                marks={{
-                  5: '5s',
-                  7: '7s',
-                  10: '10s',
-                }}
+                style={{ width: 120 }}
               />
-              <Text type="secondary" className="block mt-1 text-xs">
-                {humanFocus 
-                  ? "Note: Human videos with Pika Labs work best at 5-6 seconds for optimal quality" 
-                  : "Pika Labs generates the best quality videos between 5-10 seconds duration"}
-              </Text>
-            </Col>
-            <Col span={12}>
-              <Text strong>Video Quality:</Text>
-              <Select
-                className="w-full mt-2"
-                value={quality}
-                onChange={(value) => setQuality(value)}
+              
+              <Button
+                type="link"
+                onClick={() => setShowAdvanced(!showAdvanced)}
                 disabled={isGenerating}
               >
-                <Option value="low">Low (Faster)</Option>
-                <Option value="medium">Medium</Option>
-                <Option value="high">High (Slower)</Option>
-              </Select>
-            </Col>
-          </Row>
-
-          <div>
-            <Row gutter={16} className="mt-4">
-              <Col span={24}>
-                <div className="flex items-center">
-                  <Text strong>Human Focus:</Text>
-                  <Tooltip title="Click the help icon for tips on generating human videos">
-                    <Button 
-                      type="text" 
-                      icon={<InfoCircleOutlined />} 
-                      onClick={() => setShowHelpModal(true)}
-                      size="small"
-                      className="ml-2 -mt-1"
-                    />
-                  </Tooltip>
-                </div>
-                <div className={humanFocus ? "human-focus-enabled p-3" : "human-focus-disabled p-3"}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Switch
-                        checked={humanFocus}
-                        onChange={(checked) => {
-                          setHumanFocus(checked);
-                          setUseRealistic(true); // Always use realistic
-                          setStatusMessage(checked ? 
-                            'Human focus enabled! Your video will prioritize human content.' : 
-                            'Human focus disabled. Video will be optimized for general content.');
-                          setTimeout(() => setStatusMessage(''), 3000);
-                        }}
-                        disabled={isGenerating}
-                        checkedChildren="ON" 
-                        unCheckedChildren="OFF"
-                        className="human-focus-switch"
-                      />
-                      <Text className="ml-3 font-medium">
-                        {humanFocus ? '✓ Human Focus Enabled' : 'Human Focus Disabled'}
-                      </Text>
-                    </div>
-                    <Button
-                      type={humanFocus ? "default" : "primary"}
-                      onClick={() => {
-                        setHumanFocus(!humanFocus);
-                      }}
-                      size="small"
-                      disabled={isGenerating}
-                    >
-                      {humanFocus ? 'Disable' : 'Enable'}
-                    </Button>
-                  </div>
-                </div>
-                {humanFocus && (
-                  <Alert
-                    message="Human Focus Enabled ✓"
-                    description="For best results with humans, be specific about what they're doing. Pika Labs excels at creating realistic humans."
-                    type="success"
-                    showIcon
-                    className="mt-2"
-                  />
-                )}
-              </Col>
-            </Row>
+                {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
+              </Button>
+            </Space>
           </div>
           
-          <div className="mt-6 p-4 border-4 border-purple-500 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg">
-            <h3 className="text-center text-xl font-bold text-purple-800 mb-3">
-              🎬 PIKA LABS HD VIDEO GENERATION 🎬
-            </h3>
-            <Button
-              type="primary" 
-              onClick={async () => {
-                setIsGenerating(true);
-                setError('');
-                setVideoUrl('');
-                setProgress(0);
-                setApiCallCount(0); // Reset API call counter
-                setDiffusionStep(''); // Reset diffusion step
-                setStatusMessage('Generating premium video with Pika Labs...');
-                
-                try {
-                  // Create URL parameters for premium video generation
-                  const params = new URLSearchParams({
-                    prompt: prompt.trim(),
-                    duration: duration.toString(),
-                    quality: 'high',
-                    style: 'realistic',
-                    force_replicate: 'true',    // ALWAYS force Replicate
-                    use_hunyuan: 'false',       // ALWAYS disable Hunyuan
-                    human_focus: 'true'         // Better results with human focus
-                  });
-                  
-                  console.log('FORCE REPLICATE ENABLED for premium video');
-                  
-                  // Make GET request with query parameters
-                  const response = await apiCall(`/video/generate?${params.toString()}`);
-                  const data = await response.json();
-                  
-                  console.log('Premium video response:', data);
-                  
-                  if (data.error) {
-                    // Use the specific error_message if available, otherwise use the generic error
-                    const errorMessage = data.error_message || data.error;
-                    setError(`Video Generation Error: ${errorMessage}`);
-                    
-                    // Show informative message about Pika Labs if available
-                    if (data.pika_message) {
-                      setStatusMessage(`Note: ${data.pika_message}`);
-                    }
-                    
-                    console.error('Video generation failed:', data);
-                    setIsGenerating(false);
-                    return;
-                  }
-                  
-                  // Set video ID for status polling
-                  setVideoId(data.job_id);
-                  setPollingActive(true);
-                  setStatusMessage('Starting REPLICATE video generation process (50 network calls)...');
-                  
-                  // If video is already completed in the response
-                  if (data.status === 'completed' && data.video_url) {
-                    setVideoUrl(data.video_url);
-                    setIsGenerating(false);
-                    setStatusMessage('✨ HD VIDEO GENERATED SUCCESSFULLY!');
-                    setPollingActive(false);
-                  }
-                } catch (err: any) {
-                  const errorMessage = err.message || 'Unknown error';
-                  setError(`An error occurred: ${errorMessage}`);
-                  console.error('Error in video generation:', err);
-                  setIsGenerating(false);
-                  setStatusMessage('');
-                }
-              }}
-              disabled={isGenerating || !prompt.trim()}
-              style={{ 
-                background: 'linear-gradient(90deg, #6b46c1, #4f46e5)',
-                borderColor: '#4338ca', 
-                fontWeight: 'bold',
-                height: '70px',
-                fontSize: '20px',
-                boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)'
-              }}
-              className="w-full"
-            >
-              {isGenerating ? 
-                <><LoadingOutlined /> GENERATING YOUR VIDEO...</> : 
-                '🎥 GENERATE WITH PIKA LABS 🎥'
-              }
-            </Button>
-            <Text className="block text-center mt-3 text-purple-700 font-medium">
-              Pika Labs offers cinema-quality video generation with incredible realism
-            </Text>
-            <Alert 
-              message="About Pika Labs"
-              description="Pika Labs requires paid API credits on Replicate. Make sure your API key has sufficient credits for premium video generation."
-              type="info"
-              showIcon
-              className="mt-2"
-            />
-          </div>
-
+          {showAdvanced && (
+            <div className="grid grid-cols-2 gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
+              <div>
+                <Text>Quality:</Text>
+                <Select
+                  style={{ width: '100%' }}
+                  value={quality}
+                  onChange={setQuality}
+                  disabled={isGenerating}
+                >
+                  <Option value="low">Low (Faster)</Option>
+                  <Option value="medium">Medium</Option>
+                  <Option value="high">High (Better Quality)</Option>
+                </Select>
+              </div>
+              
+              <div>
+                <Text>Style Type:</Text>
+                <div className="flex items-center mt-2">
+                  <Switch
+                    checked={useRealistic}
+                    onChange={setUseRealistic}
+                    disabled={isGenerating}
+                  />
+                  <Text className="ml-2">{useRealistic ? 'Realistic' : 'Abstract'}</Text>
+                </div>
+              </div>
+              
+              <div>
+                <Text>Human Focus:</Text>
+                <div className="flex items-center mt-2">
+                  <Switch
+                    checked={humanFocus}
+                    onChange={setHumanFocus}
+                    disabled={isGenerating}
+                  />
+                  <Text className="ml-2">{humanFocus ? 'Enabled' : 'Disabled'}</Text>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {isGenerating && (
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-2">
+                <Text strong>Generating your video...</Text>
+                <div className="flex items-center">
+                  <span className="text-purple-600 font-medium mr-2">
+                    Cost: ₹{totalCost}
+                  </span>
+                  <span className="text-gray-500 text-sm">
+                    ({apiCallCount} API calls)
+                  </span>
+                </div>
+              </div>
+              
+              <Progress percent={progress} status="active" />
+              
+              <div className="mt-2 text-sm text-gray-500 flex justify-between">
+                <span>{statusMessage}</span>
+                {diffusionStep && <span>Step: {diffusionStep}</span>}
+              </div>
+            </div>
+          )}
+          
           {error && (
             <Alert
+              className="mt-4"
               message="Error"
               description={error}
               type="error"
               showIcon
-              closable
             />
           )}
-
-          {isGenerating && !videoUrl && (
-            <div className="space-y-2">
-              <Progress percent={progress} status="active" />
-              <Text type="secondary" className="block text-center">{statusMessage}</Text>
-              
-              {/* Display API call counter and diffusion step information */}
-              {diffusionStep && (
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                  <div className="flex justify-between items-center">
-                    <Text strong>Diffusion Progress:</Text> 
-                    <Text>{diffusionStep}</Text>
-                  </div>
-                  <div className="flex justify-between items-center mt-1">
-                    <Text strong>API Calls Made:</Text> 
-                    <Text>{apiCallCount}</Text>
-                  </div>
-                  <div className="mt-2">
-                    <Text type="secondary">
-                      Replicate makes ~50 network calls during video generation, one for each diffusion step.
-                    </Text>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
+          
           {videoUrl && (
-            <div className="mt-6 space-y-4">
-              <Title level={4}>Generated Video</Title>
-              <div className="border rounded-lg overflow-hidden">
-                <video
-                  ref={videoRef}
-                  controls
-                  className="w-full"
-                  autoPlay
-                  loop
-                >
-                  <source src={videoUrl} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-2">
+                <Text strong>Generated Video:</Text>
+                <Text type="success">Final Cost: ₹{totalCost}</Text>
               </div>
-              <div className="flex justify-end">
-                <Button
-                  type="default"
-                  icon={<CloudUploadOutlined />}
-                  onClick={() => window.open(videoUrl, '_blank')}
-                >
-                  Download Video
-                </Button>
+              <VideoPlayer videoUrl={videoUrl} />
+              <div className="mt-4 flex justify-end">
+                <Space>
+                  <Button type="primary" href={videoUrl} target="_blank">
+                    Download
+                  </Button>
+                  <Button onClick={() => setPrompt('')}>New Video</Button>
+                </Space>
               </div>
             </div>
           )}
         </div>
-        <HumanVideoHelpModal />
       </Card>
+      
+      {showHelpModal && <HumanVideoHelpModal />}
     </div>
   );
 } 

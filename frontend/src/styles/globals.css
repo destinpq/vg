@@ -619,4 +619,69 @@ form {
 .content-area {
   flex: 1;
   padding: 2rem 1rem;
+}
+
+/* Cost display styles */
+.cost-badge {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.cost-badge:hover {
+  transform: scale(1.05);
+}
+
+.cost-badge .ant-badge-ribbon {
+  top: 0;
+  right: 0;
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.cost-badge .ant-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  border: 1px solid #722ed1;
+}
+
+.cost-badge .cost-card-content {
+  padding: 12px;
+  font-size: 12px;
+}
+
+.cost-badge .cost-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #722ed1;
+}
+
+.cost-badge .cost-label {
+  font-size: 10px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Cost history button styles */
+.cost-history-button {
+  background-color: #f9f0ff;
+  border-color: #722ed1;
+  color: #722ed1;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cost-history-button:hover {
+  background-color: #722ed1;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(114, 46, 209, 0.2);
+}
+
+.cost-history-button .anticon {
+  margin-right: 6px;
 } 
