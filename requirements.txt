@@ -18,4 +18,18 @@ pytest-asyncio==0.21.1
 librosa>=0.11.0
 # madmom>=0.16.1 - Commented out due to C extension requirements
 numpy>=1.20.0
-cython>=0.25.0 
+cython>=0.25.0
+
+# Hunyuan Video Generation Dependencies
+flask>=2.0.1
+torch==2.1.0
+torchvision==0.16.0
+transformers>=4.30.0
+diffusers>=0.20.0
+tqdm>=4.66.0
+pillow>=10.0.0
+pyngrok>=5.1.0
+jinja2>=3.0.1
+werkzeug>=2.0.1
+click>=8.0.1
+itsdangerous>=2.0.1 
