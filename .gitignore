@@ -55,7 +55,11 @@ yarn-debug.log
 yarn-error.log
 .pnp/
 .pnp.js
-package-lock.json
+# Explicitly include package-lock.json for npm
+# package-lock.json
+# Make sure we don't use these package managers
+yarn.lock
+pnpm-lock.yaml
 
 # Next.js
 .next/
