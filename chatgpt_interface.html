@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepeatIt AI Video Chat</title>
+    <style>
+        :root {
+            --primary-color: #10a37f;
+            --secondary-color: #f7f7f8;
+            --text-color: #333;
+            --chat-bg: #ffffff;
+            --user-msg-bg: #f0f4f9;
+            --ai-msg-bg: #ffffff;
+            --border-color: #e5e5e5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            color: var(--text-color);
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: #202123;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .new-chat {
+            margin: 15px;
+        }
+
+        .new-chat-btn {
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: white;
+            padding: 12px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .new-chat-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .history {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .settings {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .api-token-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            background-color: #40414f;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--chat-bg);
+        }
+
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            max-width: 90%;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .user-message {
+            background-color: var(--user-msg-bg);
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .ai-message {
+            background-color: var(--ai-msg-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .input-container {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .prompt-form {
+            display: flex;
+            position: relative;
+        }
+
+        .prompt-input {
+            flex: 1;
+            padding: 12px 45px 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            resize: none;
+            height: 45px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-label {
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .option-select, .option-input {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .video-container {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        video {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .logs-container {
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+
+        .logs-container:empty {
+            display: none;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .log-info {
+            background-color: #e8f4fd;
+            color: #0c5faa;
+        }
+
+        .log-success {
+            background-color: #e6f5e6;
+            color: #0f5f0f;
+        }
+
+        .log-error {
+            background-color: #fde8e8;
+            color: #b10000;
+        }
+
+        .log-warning {
+            background-color: #fff8e6;
+            color: #975c00;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            color: #666;
+            font-style: italic;
+        }
+
+        .generation-progress {
+            height: 8px;
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="new-chat">
+            <button class="new-chat-btn" id="newChatBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V20M4 12H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                New chat
+            </button>
+        </div>
+        <div class="history" id="chatHistory">
+            <!-- Chat history items will be added here -->
+        </div>
+        <div class="settings">
+            <div>
+                <label for="apiTokenInput" style="font-size: 14px;">Replicate API Token:</label>
+                <input type="password" id="apiTokenInput" class="api-token-input" placeholder="Enter your API token">
+                <button id="saveTokenBtn" class="new-chat-btn" style="margin-top: 10px; background-color: var(--primary-color);">Save Token</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>RepeatIt AI Video Generator</h2>
+            <span id="tokenStatus"></span>
+        </div>
+        
+        <div class="chat-messages" id="messagesContainer">
+            <div class="message ai-message">
+                <p>Hi there! I'm your AI video assistant. Tell me what kind of video you'd like to generate using RepeatIt (Tencent Hunyuan Video).</p>
+                <p>For example: "Generate a video of a beautiful sunset over mountains with cinematic camera movement"</p>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <div class="options-container">
+                <div class="option-group">
+                    <span class="option-label">Duration:</span>
+                    <select id="durationSelect" class="option-select">
+                        <option value="3">3 seconds</option>
+                        <option value="5" selected>5 seconds</option>
+                        <option value="8">8 seconds</option>
+                        <option value="10">10 seconds</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <span class="option-label">Quality:</span>
+                    <select id="qualitySelect" class="option-select">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high" selected>High</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <span class="option-label">Style:</span>
+                    <select id="styleSelect" class="option-select">
+                        <option value="realistic" selected>Realistic</option>
+                        <option value="artistic">Artistic</option>
+                        <option value="stylized">Stylized</option>
+                        <option value="cinematic">Cinematic</option>
+                    </select>
+                </div>
+            </div>
+            
+            <form id="promptForm" class="prompt-form">
+                <textarea id="promptInput" class="prompt-input" placeholder="Type your prompt here..." rows="1"></textarea>
+                <button type="submit" class="send-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const messagesContainer = document.getElementById('messagesContainer');
+        const promptForm = document.getElementById('promptForm');
+        const promptInput = document.getElementById('promptInput');
+        const durationSelect = document.getElementById('durationSelect');
+        const qualitySelect = document.getElementById('qualitySelect');
+        const styleSelect = document.getElementById('styleSelect');
+        const apiTokenInput = document.getElementById('apiTokenInput');
+        const saveTokenBtn = document.getElementById('saveTokenBtn');
+        const tokenStatus = document.getElementById('tokenStatus');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const chatHistory = document.getElementById('chatHistory');
+
+        // Chat history
+        let conversations = [];
+        let currentConversationId = generateId();
+
+        // Load API token on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedToken = localStorage.getItem('replicateApiToken');
+            if (savedToken) {
+                apiTokenInput.value = savedToken;
+                tokenStatus.textContent = '✓ Token set';
+                tokenStatus.style.color = 'green';
+            }
+            
+            // Load chat history
+            loadChatHistory();
+        });
+
+        // Save API token
+        saveTokenBtn.addEventListener('click', function() {
+            const token = apiTokenInput.value.trim();
+            if (token) {
+                localStorage.setItem('replicateApiToken', token);
+                tokenStatus.textContent = '✓ Token saved';
+                tokenStatus.style.color = 'green';
+            } else {
+                tokenStatus.textContent = '✗ Invalid token';
+                tokenStatus.style.color = 'red';
+            }
+        });
+
+        // Auto-resize textarea
+        promptInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight < 200) ? this.scrollHeight + 'px' : '200px';
+        });
+
+        // Enhance prompt with more detailed descriptions
+        function enhancePrompt(prompt, style) {
+            const logs = [];
+            
+            // Log the original prompt
+            logs.push({
+                level: 'info',
+                message: `Original prompt: "${prompt}"`,
+                time: new Date().toLocaleTimeString()
+            });
+            
+            // Analyze prompt for key elements
+            let hasSceneDescription = /background|scene|setting|landscape|environment/.test(prompt.toLowerCase());
+            let hasSubject = /person|man|woman|child|animal|car|vehicle|object/.test(prompt.toLowerCase());
+            let hasAction = /walking|running|moving|dancing|flying|jumping|swimming/.test(prompt.toLowerCase());
+            let hasLighting = /light|shadow|bright|dark|sunlight|moonlight|sunset|sunrise/.test(prompt.toLowerCase());
+            let hasCameraMovement = /camera|movement|pan|zoom|tilt|tracking|aerial|drone/.test(prompt.toLowerCase());
+            let hasStyleDetails = /cinematic|realistic|artistic|vibrant|dramatic|moody|colorful/.test(prompt.toLowerCase());
+            
+            // Create an enhanced prompt based on the original and detected elements
+            let enhancedPrompt = prompt;
+            let additions = [];
+            
+            // Add style-specific enhancements
+            if (style === "realistic" && !enhancedPrompt.includes("realistic")) {
+                additions.push("realistic style");
+                logs.push({
+                    level: 'info',
+                    message: 'Added realistic style specification',
+                    time: new Date().toLocaleTimeString()
+                });
+            } else if (style === "artistic" && !enhancedPrompt.includes("artistic")) {
+                additions.push("artistic style with vibrant colors");
+                logs.push({
+                    level: 'info',
+                    message: 'Added artistic style specification',
+                    time: new Date().toLocaleTimeString()
+                });
+            } else if (style === "cinematic" && !enhancedPrompt.includes("cinematic")) {
+                additions.push("cinematic quality with dramatic lighting");
+                logs.push({
+                    level: 'info',
+                    message: 'Added cinematic quality specification',
+                    time: new Date().toLocaleTimeString()
+                });
+            } else if (style === "stylized" && !enhancedPrompt.includes("stylized")) {
+                additions.push("stylized with bold visual elements");
+                logs.push({
+                    level: 'info',
+                    message: 'Added stylized specification',
+                    time: new Date().toLocaleTimeString()
+                });
+            }
+            
+            // Add missing elements if not detected
+            if (!hasLighting) {
+                if (prompt.includes("sunset") || prompt.includes("sunrise")) {
+                    // Don't add lighting for sunset/sunrise scenes
+                } else if (style === "cinematic") {
+                    additions.push("with dramatic lighting");
+                    logs.push({
+                        level: 'info',
+                        message: 'Added lighting details',
+                        time: new Date().toLocaleTimeString()
+                    });
+                } else {
+                    additions.push("with natural lighting");
+                    logs.push({
+                        level: 'info',
+                        message: 'Added lighting details',
+                        time: new Date().toLocaleTimeString()
+                    });
+                }
+            }
+            
+            if (!hasCameraMovement) {
+                if (style === "cinematic") {
+                    additions.push("with smooth camera movement");
+                    logs.push({
+                        level: 'info',
+                        message: 'Added camera movement',
+                        time: new Date().toLocaleTimeString()
+                    });
+                } else {
+                    additions.push("with stable camera");
+                    logs.push({
+                        level: 'info',
+                        message: 'Added camera stability',
+                        time: new Date().toLocaleTimeString()
+                    });
+                }
+            }
+            
+            if (!hasStyleDetails && additions.length === 0) {
+                additions.push("high quality, detailed");
+                logs.push({
+                    level: 'info',
+                    message: 'Added quality specifications',
+                    time: new Date().toLocaleTimeString()
+                });
+            }
+            
+            // Add the enhancements to the prompt if any were generated
+            if (additions.length > 0) {
+                // Check if prompt ends with punctuation
+                const endsWithPunctuation = /[,.!?]$/.test(enhancedPrompt);
+                
+                if (endsWithPunctuation) {
+                    // Remove the punctuation first
+                    enhancedPrompt = enhancedPrompt.replace(/[,.!?]$/, '');
+                }
+                
+                // Add the enhancements
+                enhancedPrompt += `, ${additions.join(", ")}`;
+                
+                // Add back period at the end
+                if (!enhancedPrompt.endsWith('.')) {
+                    enhancedPrompt += '.';
+                }
+            }
+            
+            logs.push({
+                level: 'success',
+                message: `Enhanced prompt: "${enhancedPrompt}"`,
+                time: new Date().toLocaleTimeString()
+            });
+            
+            return {
+                prompt: enhancedPrompt,
+                logs: logs
+            };
+        }
+
+        // Submit prompt form
+        promptForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+            
+            const token = localStorage.getItem('replicateApiToken');
+            if (!token) {
+                addMessage('Please save your Replicate API token first.', 'ai', { isError: true });
+                return;
+            }
+
+            // Add user message
+            addMessage(prompt, 'user');
+            
+            // Clear input
+            promptInput.value = '';
+            promptInput.style.height = 'auto';
+            
+            // Get settings
+            const duration = durationSelect.value;
+            const quality = qualitySelect.value;
+            const style = styleSelect.value;
+            
+            // Create AI message for response
+            const aiMessageId = 'msg-' + Date.now();
+            addMessage('Analyzing your prompt...', 'ai', { id: aiMessageId });
+            
+            // Enhance the prompt with more details
+            const enhancedResult = enhancePrompt(prompt, style);
+            const enhancedPrompt = enhancedResult.prompt;
+            const promptLogs = enhancedResult.logs;
+            
+            // Update AI message with analysis results
+            addMessage('Your prompt has been analyzed and enhanced for better results. Generating video...', 'ai', { 
+                id: aiMessageId,
+                logs: promptLogs
+            });
+            
+            // Generate video with enhanced prompt
+            generateVideo(enhancedPrompt, duration, quality, style, token, aiMessageId, promptLogs);
+        });
+
+        // New chat button
+        newChatBtn.addEventListener('click', function() {
+            currentConversationId = generateId();
+            messagesContainer.innerHTML = '';
+            addMessage('Hi there! I\'m your AI video assistant. Tell me what kind of video you\'d like to generate.', 'ai');
+            saveCurrentConversation();
+            loadChatHistory();
+        });
+
+        // Generate a unique ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Load chat history from localStorage
+        function loadChatHistory() {
+            try {
+                const savedConversations = localStorage.getItem('chatHistory');
+                if (savedConversations) {
+                    conversations = JSON.parse(savedConversations);
+                    renderChatHistory();
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        // Save current conversation to history
+        function saveCurrentConversation() {
+            const messages = Array.from(messagesContainer.children).map(msg => {
+                const isUser = msg.classList.contains('user-message');
+                const content = msg.textContent;
+                return { content, isUser };
+            });
+            
+            if (messages.length <= 1) return; // Don't save empty conversations
+            
+            // Get first user message for title
+            const firstUserMsg = messages.find(m => m.isUser);
+            const title = firstUserMsg ? 
+                (firstUserMsg.content.length > 30 ? 
+                    firstUserMsg.content.substring(0, 30) + '...' : 
+                    firstUserMsg.content) : 
+                'New conversation';
+            
+            // Update existing or add new
+            const existingIndex = conversations.findIndex(c => c.id === currentConversationId);
+            const conversation = {
+                id: currentConversationId,
+                title,
+                messages,
+                timestamp: Date.now()
+            };
+            
+            if (existingIndex >= 0) {
+                conversations[existingIndex] = conversation;
+            } else {
+                conversations.unshift(conversation);
+            }
+            
+            // Keep only the last 10 conversations
+            conversations = conversations.slice(0, 10);
+            
+            // Save to localStorage
+            localStorage.setItem('chatHistory', JSON.stringify(conversations));
+            
+            // Update sidebar
+            renderChatHistory();
+        }
+
+        // Render chat history in sidebar
+        function renderChatHistory() {
+            chatHistory.innerHTML = '';
+            conversations.forEach(convo => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.textContent = convo.title;
+                historyItem.dataset.id = convo.id;
+                historyItem.addEventListener('click', () => loadConversation(convo.id));
+                chatHistory.appendChild(historyItem);
+            });
+        }
+
+        // Load a conversation from history
+        function loadConversation(id) {
+            const conversation = conversations.find(c => c.id === id);
+            if (!conversation) return;
+            
+            currentConversationId = id;
+            messagesContainer.innerHTML = '';
+            
+            conversation.messages.forEach(msg => {
+                const type = msg.isUser ? 'user' : 'ai';
+                addMessage(msg.content, type, { dontSave: true });
+            });
+        }
+
+        // Add message to chat
+        function addMessage(content, type, options = {}) {
+            const { id, isError, isLoading, hasVideo, videoUrl, logs, dontSave } = options;
+            
+            let messageDiv;
+            
+            if (id) {
+                // Check if message with this ID already exists
+                messageDiv = document.getElementById(id);
+                if (messageDiv) {
+                    // Update existing message
+                    if (isLoading) {
+                        messageDiv.innerHTML = `
+                            <div class="loading-indicator">
+                                <div class="spinner"></div>
+                                <span>${content}</span>
+                            </div>
+                        `;
+                    } else {
+                        messageDiv.innerHTML = '';
+                        const p = document.createElement('p');
+                        p.textContent = content;
+                        messageDiv.appendChild(p);
+                        
+                        if (logs) {
+                            const logsContainer = document.createElement('div');
+                            logsContainer.className = 'logs-container';
+                            logs.forEach(log => {
+                                const logEntry = document.createElement('div');
+                                logEntry.className = `log-entry log-${log.level}`;
+                                logEntry.textContent = `[${log.time}] ${log.message}`;
+                                logsContainer.appendChild(logEntry);
+                            });
+                            messageDiv.appendChild(logsContainer);
+                        }
+                        
+                        if (hasVideo && videoUrl) {
+                            const videoContainer = document.createElement('div');
+                            videoContainer.className = 'video-container';
+                            
+                            const video = document.createElement('video');
+                            video.controls = true;
+                            video.autoplay = true;
+                            video.src = videoUrl;
+                            
+                            videoContainer.appendChild(video);
+                            messageDiv.appendChild(videoContainer);
+                        }
+                    }
+                    
+                    if (options.progress !== undefined) {
+                        let progressContainer = messageDiv.querySelector('.generation-progress');
+                        if (!progressContainer) {
+                            progressContainer = document.createElement('div');
+                            progressContainer.className = 'generation-progress';
+                            const progressBar = document.createElement('div');
+                            progressBar.className = 'progress-bar';
+                            progressContainer.appendChild(progressBar);
+                            messageDiv.appendChild(progressContainer);
+                        }
+                        
+                        const progressBar = progressContainer.querySelector('.progress-bar');
+                        progressBar.style.width = `${options.progress}%`;
+                    }
+                }
+                return messageDiv;
+            }
+            
+            // Create new message
+            messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            if (id) messageDiv.id = id;
+            
+            if (isError) {
+                messageDiv.style.backgroundColor = '#fde8e8';
+                messageDiv.style.color = '#b10000';
+            }
+            
+            if (isLoading) {
+                messageDiv.innerHTML = `
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <span>${content}</span>
+                    </div>
+                `;
+            } else {
+                const p = document.createElement('p');
+                p.textContent = content;
+                messageDiv.appendChild(p);
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            if (!dontSave) {
+                saveCurrentConversation();
+            }
+            
+            return messageDiv;
+        }
+
+        // Generate video using Replicate API
+        async function generateVideo(prompt, duration, quality, style, token, messageId, promptLogs = []) {
+            const logs = [...promptLogs]; // Start with prompt enhancement logs if provided
+            
+            function addLog(level, message) {
+                logs.push({
+                    level,
+                    message,
+                    time: new Date().toLocaleTimeString()
+                });
+                
+                // Update message with latest logs
+                addMessage('Generating your video...', 'ai', {
+                    id: messageId,
+                    logs: logs
+                });
+            }
+            
+            try {
+                addLog('info', 'Starting video generation process');
+                if (promptLogs.length === 0) {
+                    // Only log the prompt if it wasn't already logged during enhancement
+                    addLog('info', `Prompt: "${prompt}"`);
+                }
+                addLog('info', `Duration: ${duration}s, Quality: ${quality}, Style: ${style}`);
+                
+                // Making direct API call to Replicate API
+                const options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${token}`
+                    },
+                    body: JSON.stringify({
+                        version: "6c9132aee14409cd6568d030453f1ba50f5f3412b844fe67f78a9eb62d55664f",
+                        input: {
+                            prompt: prompt,
+                            negative_prompt: "low quality, blurry, noisy, text, watermark, signature, low-res, bad anatomy, bad proportions, deformed body, duplicate, extra limbs",
+                            num_frames: Math.min(96, 24 * parseInt(duration)),
+                            width: 1280,
+                            height: 720,
+                            fps: 24,
+                            guidance_scale: 9.0,
+                            num_inference_steps: 50,
+                            seed: Math.floor(Math.random() * 1000000)
+                        }
+                    })
+                };
+                
+                addLog('info', 'Sending request to Replicate API');
+                
+                // Initial request to start prediction
+                const response = await fetch('https://api.replicate.com/v1/predictions', options);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${JSON.stringify(errorData)}`);
+                }
+                
+                const data = await response.json();
+                const predictionId = data.id;
+                
+                addLog('success', `Prediction started. ID: ${predictionId}`);
+                addLog('info', 'Waiting for video generation to complete...');
+                
+                // Poll for results
+                let status = 'starting';
+                let progress = 0;
+                let pollCount = 0;
+                
+                while (status !== 'succeeded' && status !== 'failed' && status !== 'canceled') {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+                        headers: {
+                            'Authorization': `Token ${token}`
+                        }
+                    });
+                    
+                    if (!statusResponse.ok) {
+                        throw new Error(`Failed to check prediction status: ${statusResponse.status}`);
+                    }
+                    
+                    const statusData = await statusResponse.json();
+                    status = statusData.status;
+                    
+                    pollCount++;
+                    
+                    // Update progress based on status
+                    if (status === 'processing') {
+                        // Calculate progress based on polling count (approximate)
+                        progress = Math.min(90, pollCount * 5);
+                        
+                        // Try to parse step information from logs if available
+                        if (statusData.logs) {
+                            const logLines = statusData.logs.split('\n');
+                            for (const line of logLines) {
+                                if (line.includes('step') && line.includes('/')) {
+                                    const match = line.match(/step (\d+)\/(\d+)/);
+                                    if (match) {
+                                        const currentStep = parseInt(match[1]);
+                                        const totalSteps = parseInt(match[2]);
+                                        // Calculate progress based on diffusion steps
+                                        progress = Math.min(90, Math.floor((currentStep / totalSteps) * 90));
+                                        
+                                        addLog('info', `Processing step ${currentStep}/${totalSteps}`);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    addMessage('Generating your video...', 'ai', {
+                        id: messageId,
+                        logs: logs,
+                        progress: progress
+                    });
+                    
+                    // Add status update log every few polls to avoid too many logs
+                    if (pollCount % 5 === 0) {
+                        addLog('info', `Still processing... (Status: ${status}, Progress: ~${progress}%)`);
+                    }
+                }
+                
+                if (status === 'succeeded') {
+                    const videoUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+                    
+                    addLog('success', 'Video generation completed successfully!');
+                    addMessage('Video generated successfully! Here\'s the result:', 'ai', {
+                        id: messageId,
+                        hasVideo: true,
+                        videoUrl: videoUrl,
+                        logs: logs,
+                        progress: 100
+                    });
+                } else {
+                    addLog('error', `Generation failed with status: ${status}`);
+                    addLog('error', data.error || 'Unknown error occurred');
+                    
+                    addMessage('Sorry, video generation failed. Please try again with a different prompt.', 'ai', {
+                        id: messageId,
+                        isError: true,
+                        logs: logs
+                    });
+                }
+            } catch (error) {
+                addLog('error', `Error: ${error.message}`);
+                
+                addMessage(`Error generating video: ${error.message}`, 'ai', {
+                    id: messageId,
+                    isError: true,
+                    logs: logs
+                });
+            }
+        }
+    </script>
+</body>
+</html> 

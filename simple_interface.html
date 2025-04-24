@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Generator with RepeatIt (Tencent Hunyuan)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            color: #a94442;
+        }
+        .loading {
+            background-color: #d9edf7;
+            border: 1px solid #bce8f1;
+            color: #31708f;
+        }
+        #videoContainer {
+            margin-top: 20px;
+        }
+        video {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Generator with RepeatIt (Tencent Hunyuan)</h1>
+    
+    <div class="container">
+        <h2>Configure API Token</h2>
+        <div class="form-group">
+            <label for="apiToken">Replicate API Token:</label>
+            <input type="text" id="apiToken" placeholder="Enter your Replicate API token">
+        </div>
+        <button id="saveToken">Save Token</button>
+        <div id="tokenStatus" class="status"></div>
+    </div>
+
+    <div class="container" style="margin-top: 20px;">
+        <h2>Generate Video</h2>
+        <div class="form-group">
+            <label for="prompt">Prompt:</label>
+            <textarea id="prompt" rows="3" placeholder="Describe the video you want to generate..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="duration">Duration (seconds):</label>
+            <input type="number" id="duration" min="1" max="30" value="5">
+        </div>
+        <div class="form-group">
+            <label for="quality">Quality:</label>
+            <select id="quality">
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="style">Style:</label>
+            <select id="style">
+                <option value="realistic">Realistic</option>
+                <option value="artistic">Artistic</option>
+                <option value="stylized">Stylized</option>
+            </select>
+        </div>
+        <button id="generateVideo">Generate Video</button>
+        <div id="generationStatus" class="status"></div>
+    </div>
+
+    <div id="results"></div>
+    <div id="videoContainer"></div>
+
+    <script>
+        // Save API token to localStorage
+        document.getElementById('saveToken').addEventListener('click', function() {
+            const token = document.getElementById('apiToken').value.trim();
+            if (token) {
+                localStorage.setItem('replicateApiToken', token);
+                document.getElementById('tokenStatus').textContent = 'Token saved!';
+                document.getElementById('tokenStatus').className = 'status success';
+            } else {
+                document.getElementById('tokenStatus').textContent = 'Please enter a valid token';
+                document.getElementById('tokenStatus').className = 'status error';
+            }
+        });
+
+        // Load saved token on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedToken = localStorage.getItem('replicateApiToken');
+            if (savedToken) {
+                document.getElementById('apiToken').value = savedToken;
+                document.getElementById('tokenStatus').textContent = 'Token loaded from storage';
+                document.getElementById('tokenStatus').className = 'status success';
+            }
+        });
+
+        // Generate video
+        document.getElementById('generateVideo').addEventListener('click', function() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const duration = document.getElementById('duration').value;
+            const quality = document.getElementById('quality').value;
+            const style = document.getElementById('style').value;
+            const token = localStorage.getItem('replicateApiToken');
+
+            if (!prompt) {
+                document.getElementById('generationStatus').textContent = 'Please enter a prompt';
+                document.getElementById('generationStatus').className = 'status error';
+                return;
+            }
+
+            if (!token) {
+                document.getElementById('generationStatus').textContent = 'Please save your Replicate API token first';
+                document.getElementById('generationStatus').className = 'status error';
+                return;
+            }
+
+            document.getElementById('generationStatus').textContent = 'Generating video...';
+            document.getElementById('generationStatus').className = 'status loading';
+            document.getElementById('results').textContent = '';
+            document.getElementById('videoContainer').innerHTML = '';
+
+            // Making direct API call to Replicate API
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                },
+                body: JSON.stringify({
+                    version: "6c9132aee14409cd6568d030453f1ba50f5f3412b844fe67f78a9eb62d55664f",
+                    input: {
+                        prompt: prompt,
+                        negative_prompt: "low quality, blurry, noisy, text, watermark, signature, low-res, bad anatomy, bad proportions, deformed body, duplicate, extra limbs",
+                        num_frames: Math.min(96, 24 * parseInt(duration)), // Cap at 96 frames
+                        width: 1280,
+                        height: 720,
+                        fps: 24,
+                        guidance_scale: 9.0,
+                        num_inference_steps: 50,
+                        seed: Math.floor(Math.random() * 1000000)
+                    }
+                })
+            };
+
+            // Initial request to start prediction
+            fetch('https://api.replicate.com/v1/predictions', options)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('results').textContent = 'Prediction started. ID: ' + data.id;
+                    // Poll for results
+                    pollForResults(data.id, token);
+                })
+                .catch(error => {
+                    document.getElementById('generationStatus').textContent = 'Error: ' + error.message;
+                    document.getElementById('generationStatus').className = 'status error';
+                    document.getElementById('results').textContent = 'API Error: ' + error.message;
+                });
+        });
+
+        // Poll for prediction results
+        function pollForResults(predictionId, token) {
+            const pollInterval = setInterval(() => {
+                fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+                    headers: {
+                        'Authorization': `Token ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+                    
+                    if (data.status === 'succeeded') {
+                        clearInterval(pollInterval);
+                        document.getElementById('generationStatus').textContent = 'Video generated successfully!';
+                        document.getElementById('generationStatus').className = 'status success';
+                        
+                        // Display the video
+                        const videoUrl = data.output;
+                        const videoElement = document.createElement('video');
+                        videoElement.controls = true;
+                        videoElement.autoplay = true;
+                        videoElement.src = Array.isArray(videoUrl) ? videoUrl[0] : videoUrl;
+                        document.getElementById('videoContainer').innerHTML = '';
+                        document.getElementById('videoContainer').appendChild(videoElement);
+                    } else if (data.status === 'failed') {
+                        clearInterval(pollInterval);
+                        document.getElementById('generationStatus').textContent = 'Generation failed: ' + data.error;
+                        document.getElementById('generationStatus').className = 'status error';
+                    }
+                })
+                .catch(error => {
+                    clearInterval(pollInterval);
+                    document.getElementById('generationStatus').textContent = 'Error polling for results: ' + error.message;
+                    document.getElementById('generationStatus').className = 'status error';
+                });
+            }, 2000); // Poll every 2 seconds
+        }
+    </script>
+</body>
+</html> 

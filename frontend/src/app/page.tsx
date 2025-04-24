@@ -5,6 +5,7 @@ import { Tabs } from 'antd';
 import VideoGenerator from '../components/VideoGenerator';
 import ConversationGenerator from '../components/ConversationGenerator';
 import ImageToVideoGenerator from '../components/ImageToVideoGenerator';
+import DevotionalVideoGenerator from '../components/DevotionalVideoGenerator';
 
 const { TabPane } = Tabs;
 
@@ -23,6 +24,16 @@ export default function Home() {
             </p>
           </div>
           <VideoGenerator />
+        </TabPane>
+        
+        <TabPane tab="Devotional Content" key="devotional">
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg mb-6 border border-indigo-200">
+            <h3 className="text-xl font-bold text-indigo-800">🕊️ NEW: Devotional Video Generator</h3>
+            <p className="text-indigo-700">
+              Create spiritually meaningful videos for worship, meditation, prayer backgrounds, and religious content!
+            </p>
+          </div>
+          <DevotionalVideoGenerator />
         </TabPane>
         
         <TabPane tab="Conversation Videos" key="conversation">

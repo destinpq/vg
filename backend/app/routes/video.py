@@ -26,13 +26,13 @@ import tempfile
 import shutil
 from fastapi.responses import StreamingResponse
 
-from backend.app.utils.config import get_settings
-from backend.app.ai_core import HunyuanWrapper
-from backend.app.utils.gpu_info import get_gpu_info, get_gpu_acceleration_info
-from backend.app.services.video_queue import video_queue, VideoQueue, VideoStatus
-from backend.app.models.video import VideoGenerationRequest, VideoGenerationResponse, VideoGenerationStatus
+from ..utils.config import get_settings
+from ..ai_core import HunyuanWrapper
+from ..utils.gpu_info import get_gpu_info, get_gpu_acceleration_info
+from ..services.video_queue import video_queue, VideoQueue, VideoStatus
+from ..models.video import VideoGenerationRequest, VideoGenerationResponse, VideoGenerationStatus
 # Import our fixed function
-from backend.app.routes.video_fix import setup_openai_api_key, generate_sequential_prompts_fixed
+from .video_fix import setup_openai_api_key, generate_sequential_prompts_fixed
 
 # Initialize router
 router = APIRouter()
@@ -239,19 +239,18 @@ async def generate_video(
                     try:
                         # Use the CORRECT Tencent Hunyuan model on Replicate
                         # Update to version ID that the user has permissions for
-                        model_id = "tencent/hunyuan-video:6c9132aee14409cd6568d030453f1ba50f5f3412b844fe67f78a9eb62d55664f" # Updated version hash
+                        model_id = "tencent/hunyuan-video" # Use the latest version
                         
-                        # Create the input parameters - Adjust based on Hunyuan potential needs
+                        # Create the input parameters specifically for Tencent Hunyuan Video model
                         input_params = {
                             "prompt": prompt,
-                            "negative_prompt": "low quality, blurry, noisy, text, watermark, signature", # Adjusted negative prompt
-                            # Hunyuan might have different ways to specify length, using num_frames if possible
-                            "num_frames": fps * duration, 
-                            "width": width, 
-                            "height": height, 
-                            "fps": fps, # Pass requested FPS
-                            "guidance_scale": 7.5, # Common default
-                            "num_inference_steps": 50, # Common default
+                            "negative_prompt": "low quality, blurry, noisy, text, watermark, signature, low-res, bad anatomy, bad proportions, deformed body, duplicate, extra limbs",
+                            "num_frames": min(96, fps * duration), # Cap at 96 frames which is typical limit
+                            "width": width,
+                            "height": height,
+                            "fps": fps,
+                            "guidance_scale": 9.0, # Increased for better prompt adherence
+                            "num_inference_steps": 50,
                             "seed": seed if seed is not None else random.randint(1, 100000)
                         }
                         
@@ -715,7 +714,7 @@ async def download_videos(prompts: List[str], output_dir: Path) -> List[str]:
         return []
     
     # Set the model ID using the version the user has permission for
-    model_id = "tencent/hunyuan-video:6c9132aee14409cd6568d030453f1ba50f5f3412b844fe67f78a9eb62d55664f"
+    model_id = "tencent/hunyuan-video"
     
     for i, prompt in enumerate(prompts):
         try:
@@ -723,17 +722,17 @@ async def download_videos(prompts: List[str], output_dir: Path) -> List[str]:
             local_path = output_dir / segment_filename
             logging.info(f"Generating video for prompt {i+1}: {prompt[:50]}...")
             
-            # Generate the video using Replicate API
+            # Create the parameters for the Hunyuan model
             input_params = {
                 "prompt": prompt,
-                "negative_prompt": "low quality, blurry, noisy, text, watermark, signature",
-                "num_frames": 24 * 3,  # 3 seconds at 24fps
-                "width": 1280,
-                "height": 720,
-                "fps": 24,
-                "guidance_scale": 7.5,
+                "negative_prompt": "low quality, blurry, noisy, text, watermark, signature, low-res, bad anatomy, bad proportions, deformed body, duplicate, extra limbs",
+                "num_frames": min(96, fps * segment_duration), # Cap at 96 frames which is typical limit
+                "width": width,
+                "height": height,
+                "fps": fps,
+                "guidance_scale": 9.0, # Increased for better prompt adherence
                 "num_inference_steps": 50,
-                "seed": random.randint(1, 100000)
+                "seed": seed if seed is not None else random.randint(1, 100000)
             }
             
             # Create a prediction

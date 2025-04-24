@@ -14,6 +14,7 @@ from app.utils.config import get_settings, verify_settings
 from app.services.video_queue import video_queue # Import queue
 from pathlib import Path
 import re
+import random
 
 # Load environment variables from .env file
 load_dotenv()

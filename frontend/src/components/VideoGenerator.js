@@ -5,7 +5,7 @@ import axios from 'axios';
 import './VideoGenerator.css';
 
 // Set API URL to match the backend port
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Debug mode - set to true to see more console messages
 const DEBUG = true;

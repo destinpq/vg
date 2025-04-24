@@ -1,6 +1,44 @@
-# Lyrics to Video Backend
+# Flask Video Generator Backend
 
-This service converts song lyrics into a video by generating a video prompt for each line using GPT-3.5 and then generating a video clip for each prompt using Mochi-1.
+This is a Flask-based backend service for the Video Generator application. It provides RESTful API endpoints for video generation jobs.
+
+## Setup
+
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Set up environment variables (optional):
+Create a `.env` file in the backend directory with your API keys:
+```
+OPENAI_API_KEY=your_openai_api_key
+```
+
+## Running the Server
+
+Start the Flask server:
+```bash
+python flask_main.py
+```
+
+The server will run at http://0.0.0.0:8000
+
+## API Endpoints
+
+- `POST /video`: Create a new video generation job
+- `GET /status/<model_id>/<prediction_id>`: Check the status of a video job
+- `GET /outputs/<model_id>/<prediction_id>`: Retrieve the generated video
+- `GET /outputs`: List all successfully completed video jobs
+- `GET /`: Health check endpoint
+- `GET /video/health`: Video service health check
+
+## Development
+
+To run the server in debug mode:
+```bash
+flask --app flask_main run --debug
+```
 
 ## Features
 
