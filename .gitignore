@@ -153,4 +153,8 @@ logs/
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# doctl files
+doctl/
+doctl.zip 
