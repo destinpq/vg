@@ -36,10 +36,10 @@ function VideoGenerator() {
   useEffect(() => {
     const checkGpuStatus = async () => {
       try {
-        logDebug('Checking GPU status at endpoint:', `${API_URL}/video/hunyuan-status`);
+        logDebug('Checking GPU status at endpoint:', `${API_URL}/api/hunyuan/health`);
         
         // Add proper headers for CORS
-        const response = await axios.get(`${API_URL}/video/hunyuan-status`, {
+        const response = await axios.get(`${API_URL}/api/hunyuan/health`, {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -76,37 +76,38 @@ function VideoGenerator() {
       // FORCE Hunyuan usage
       const usingHunyuan = true; // Force true to always use Hunyuan
       
-      // Use the specific Hunyuan endpoint 
-      const endpoint = `${API_URL}/video/hunyuan-video`;
+      // Use the correct API endpoint structure
+      const endpoint = `${API_URL}/api/hunyuan/generate`;
          
       // Create the Hunyuan parameters
       const params = { 
         prompt,
-        duration: parseFloat(duration),
         width: 1280,
         height: 720,
-        fps: 24,
-        guidance_scale: 6.5
+        num_inference_steps: 50,
+        output_format: "mp4"
       };
       
       logDebug(`Using Hunyuan endpoint:`, endpoint);
       logDebug('Request params:', params);
       
-      // Make the API request with GET and query params
-      const response = await axios.get(endpoint, { 
-        params, 
-        headers: { 'Accept': 'application/json' } 
+      // Make the API request with POST and body params (not GET)
+      const response = await axios.post(endpoint, params, { 
+        headers: { 
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        } 
       });
 
       logDebug('Video generation response:', response.data);
       
-      // Extract the job_id
-      const id = response.data.job_id;
+      // Extract the video_id
+      const id = response.data.video_id;
       setVideoId(id);
       setStatus('queued');
 
       // Status endpoint for Hunyuan
-      const statusEndpoint = `${API_URL}/video/job-status/${id}`;
+      const statusEndpoint = `${API_URL}/api/hunyuan/status/${id}`;
       logDebug('Status endpoint:', statusEndpoint);
 
       // Start polling for status
