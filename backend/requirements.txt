@@ -1,4 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cpu
+# --extra-index-url https://download.pytorch.org/whl/cpu # Commented out
 # Flask backend dependencies
 flask==2.3.3
 flask-cors==4.0.0
@@ -6,25 +6,25 @@ werkzeug==2.3.7
 
 # Original requirements
 python-dotenv==1.0.0
-requests==2.31.0
+# requests==2.31.0 # Commented out - only needed for replicate flow
 
 # Additional dependencies
-uvicorn[standard]==0.23.2
-python-jose==3.3.0
-ffmpeg-python>=0.2.0
-aiofiles==23.2.1
-pytest==7.4.0
-pytest-asyncio==0.21.1
+# uvicorn[standard]==0.23.2 # Commented out - likely not needed for Flask
+# python-jose==3.3.0 # Commented out
+# ffmpeg-python>=0.2.0 # Commented out
+# aiofiles==23.2.1 # Commented out
+# pytest==7.4.0 # Commented out - testing dependency
+# pytest-asyncio==0.21.1 # Commented out - testing dependency
 # Audio processing
 # madmom>=0.16.1  # Commented out due to C extension requirements
-cython>=0.25.0
-tqdm==4.66.1
-huggingface-hub>=0.16.0
-transformers>=4.30.0
-diffusers>=0.18.0
-safetensors>=0.3.1
-peft>=0.4.0
-torch>=2.0.0
-xformers>=0.0.20
-triton>=2.0.0
-replicate==0.15.4 
+# cython>=0.25.0 # Commented out - build dependency for madmom
+# tqdm==4.66.1 # Commented out
+# huggingface-hub>=0.16.0 # Commented out
+# transformers>=4.30.0 # Commented out
+# diffusers>=0.18.0 # Commented out
+# safetensors>=0.3.1 # Commented out
+# peft>=0.4.0 # Commented out
+# torch>=2.0.0 # Commented out - build dependency for xformers
+# xformers>=0.0.20 # Commented out - requires torch
+# triton>=2.0.0 # Commented out - likely GPU specific
+# replicate==0.15.4 # Commented out - only needed for replicate flow 
