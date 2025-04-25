@@ -1,0 +1,59 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+venv311/
+env/
+ENV/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
+# Generated files
+output/
+outputs/
+model_cache/
+temp/
+
+# Development scripts
+*.ps1
+*.sh
+
+# Version control
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Large files and models
+models/ 

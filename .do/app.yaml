@@ -1,31 +1,60 @@
-spec:
-  name: video-generator
-  services:
+name: video-generator
+region: nyc
+services:
   - name: backend
-    git:
+    github:
       branch: main
-      repo_clone_url: https://github.com/destinpq/vg.git
-    build_command: pip install -r backend/requirements.txt
-    run_command: cd backend && python -m flask run --host=0.0.0.0
+      deploy_on_push: true
+      repo: ${YOUR_GITHUB_USERNAME}/video-generator
+    source_dir: backend
+    dockerfile_path: Dockerfile
+    http_port: 8080
+    instance_size_slug: basic-1x
+    instance_count: 1
+    health_check:
+      http_path: /api/health
+      period_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3
+      success_threshold: 1
+    routes:
+      - path: /api
     envs:
-    - key: FLASK_APP
-      value: app.flask_app
-    - key: FLASK_ENV
-      value: production
-    - key: PORT
-      value: "8080"
-    - key: HOST
-      scope: RUN_TIME
-      value: ${APP_URL}
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: flask_main
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 8080
+      - key: PYTHONUNBUFFERED
+        value: "1"
 
   - name: frontend
-    git:
+    github:
       branch: main
-      repo_clone_url: https://github.com/destinpq/vg.git
-    build_command: cd frontend && npm install && npm run build
-    run_command: cd frontend && npm start
+      deploy_on_push: true
+      repo: ${YOUR_GITHUB_USERNAME}/video-generator
+    source_dir: frontend
+    dockerfile_path: Dockerfile
+    http_port: 3000
+    instance_size_slug: basic-xs
+    instance_count: 1
+    routes:
+      - path: /
+    cors:
+      allow_origins:
+        - regex: .*
+      allow_methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
     envs:
-    - key: NODE_ENV
-      value: production
-    - key: NEXT_PUBLIC_API_URL 
-      value: ${APP_URL}/api 
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        scope: BUILD_TIME
+        value: ${APP_URL}/api 

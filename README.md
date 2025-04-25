@@ -144,4 +144,98 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgements
 
 - Mochi-1 model by GenMo: [github.com/genmo/mochi](https://github.com/genmo/mochi)
-- Based on research from [paper](https://arxiv.org/abs/2401.04092) 
+- Based on research from [paper](https://arxiv.org/abs/2401.04092)
+
+# Video Generator - Digital Ocean Deployment Guide
+
+This repository contains a video generation application with separate frontend and backend services, optimized for deployment on Digital Ocean App Platform.
+
+## Project Structure
+
+- **Frontend**: Next.js application in the `/frontend` directory
+- **Backend**: Flask API in the `/backend` directory
+
+## Deployment Instructions
+
+### Prerequisites
+
+1. A [Digital Ocean](https://www.digitalocean.com/) account
+2. The [doctl](https://docs.digitalocean.com/reference/doctl/how-to/install/) CLI tool installed and configured
+3. Git repository hosted on GitHub
+
+### Steps to Deploy
+
+1. **Update GitHub Repository Information**
+
+   Open `.do/app.yaml` and replace `${YOUR_GITHUB_USERNAME}` with your actual GitHub username.
+
+2. **Configure Environment Variables**
+
+   Add any required API keys or environment variables to the `envs` section in `.do/app.yaml`.
+
+3. **Deploy to Digital Ocean App Platform**
+
+   ```bash
+   # Ensure you're authenticated with Digital Ocean
+   doctl auth init
+
+   # Create the app
+   doctl apps create --spec .do/app.yaml
+   ```
+
+4. **Monitor Deployment**
+
+   ```bash
+   # List your apps
+   doctl apps list
+
+   # Get details for your app
+   doctl apps get <APP_ID>
+   ```
+
+## Scaling and Optimization
+
+The deployment is configured with the following optimizations:
+
+- **Multi-stage Docker builds** for smaller image sizes
+- **Efficient caching** of dependencies
+- **Security hardening** with non-root users
+- **Performance optimizations** for Next.js
+
+To scale your application:
+
+1. Modify the `instance_count` in `.do/app.yaml` (supports auto-scaling)
+2. Upgrade the `instance_size_slug` for more resources:
+   - `basic-xs` (1 vCPU, 512MB RAM)
+   - `basic-s` (1 vCPU, 1GB RAM)
+   - `basic-m` (1 vCPU, 2GB RAM)
+   - `basic-l` (2 vCPU, 4GB RAM)
+   - `basic-xl` (4 vCPU, 8GB RAM)
+
+## Local Development
+
+1. **Backend**
+
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   python flask_main.py
+   ```
+
+2. **Frontend**
+
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+## Troubleshooting
+
+If you encounter deployment issues:
+
+1. Check build logs in the Digital Ocean App Platform dashboard
+2. Verify all environment variables are correctly set
+3. Ensure your GitHub repository is accessible to Digital Ocean
+
+For more detailed instructions, refer to the [Digital Ocean App Platform documentation](https://docs.digitalocean.com/products/app-platform/). 
