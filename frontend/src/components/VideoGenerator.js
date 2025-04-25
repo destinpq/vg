@@ -5,7 +5,7 @@ import axios from 'axios';
 // import './VideoGenerator.css'; // Removed missing CSS import
 
 // Set API URL to match the backend port
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://shark-app-2-k9p53.ondigitalocean.app';
 
 // Debug mode - set to true to see more console messages
 const DEBUG = true;
