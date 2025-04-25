@@ -5,9 +5,10 @@ services:
     github:
       branch: main
       deploy_on_push: true
-      repo: ${YOUR_GITHUB_USERNAME}/video-generator
+      repo: destinpq/vg
     source_dir: backend
-    dockerfile_path: Dockerfile
+    build_command: pip install -r requirements.txt
+    run_command: python flask_main.py
     http_port: 8080
     instance_size_slug: basic-1x
     instance_count: 1
@@ -35,9 +36,10 @@ services:
     github:
       branch: main
       deploy_on_push: true
-      repo: ${YOUR_GITHUB_USERNAME}/video-generator
+      repo: destinpq/vg
     source_dir: frontend
-    dockerfile_path: Dockerfile
+    build_command: npm install && npm run build
+    run_command: npm start
     http_port: 3000
     instance_size_slug: basic-xs
     instance_count: 1
