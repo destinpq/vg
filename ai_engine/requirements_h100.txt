@@ -1,0 +1,23 @@
+# Core dependencies for HunyuanVideo with H100 GPU optimization
+torch==2.1.0
+torchvision==0.16.0
+python-dotenv==1.0.0
+numpy==1.24.3
+pillow>=10.0.0
+tqdm>=4.66.0
+transformers>=4.30.0
+diffusers>=0.20.0
+opencv-python>=4.8.0
+
+# Web server dependencies
+flask>=2.0.1
+werkzeug>=2.0.1
+jinja2>=3.0.1
+pyngrok>=5.1.0
+
+# Optional GPU optimizations
+# xformers>=0.0.21
+# accelerate>=0.23.0
+
+# Video processing
+ffmpeg-python>=0.2.0 

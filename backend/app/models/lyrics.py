@@ -1,30 +1,35 @@
-from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional, Union, List
+"""
+Lyrics data models.
+"""
+from sqlalchemy import Column, String, Integer, Float, JSON, DateTime, Boolean, Text, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from .base import Base
 
-class LyricsToVideoRequest(BaseModel):
-    """
-    Schema for lyrics to video request
-    """
-    lyrics: str = Field(..., description="Lyrics to convert to a video")
-    language: str = Field(..., description="Language of the lyrics")
-    style: Optional[str] = Field(None, description="Style of the video to generate")
-    audio_file: Optional[Union[str, HttpUrl]] = Field(None, description="Base64 encoded audio or URL to an audio file")
-
-class VideoGenerationPrompt(BaseModel):
-    """
-    Schema for video generation prompt
-    """
-    prompt: str = Field(..., description="Prompt for the video generation")
-    line: str = Field(..., description="Original lyrics line")
-    index: int = Field(..., description="Index of the line in the original lyrics")
-
-class LyricsToVideoResponse(BaseModel):
-    """
-    Schema for lyrics to video response
-    """
-    video_id: str = Field(..., description="Unique identifier for the generated video")
-    video_url: str = Field(..., description="URL to access the generated video")
-    lyrics: str = Field(..., description="Original lyrics used for generation")
-    clips: List[str] = Field(..., description="List of clip URLs for each line")
-    prompts: List[str] = Field(..., description="List of prompts used for each clip")
-    status: str = Field(..., description="Status of the video generation") 
+class Lyrics(Base):
+    """Lyrics model for tracking generated lyrics prompts"""
+    __tablename__ = "lyrics"
+    
+    id = Column(String(64), primary_key=True, index=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    
+    # Lyrics information
+    original_text = Column(Text, nullable=False)
+    language = Column(String(32), default="english")
+    status = Column(String(32), default="pending")  # pending, processing, completed, failed
+    
+    # Style information
+    style = Column(String(64), nullable=True)
+    
+    # Results
+    prompts = Column(JSON, nullable=True)  # Array of generated prompts
+    
+    # Error information (if any)
+    error = Column(Text, nullable=True)
+    
+    # Additional metadata
+    metadata = Column(JSON, nullable=True)
+    
+    def __repr__(self):
+        return f"<Lyrics(id={self.id}, status={self.status})>" 
