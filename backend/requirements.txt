@@ -23,6 +23,7 @@ transformers>=4.30.0
 diffusers>=0.18.0
 safetensors>=0.3.1
 peft>=0.4.0
+torch>=2.0.0
 xformers>=0.0.20
 triton>=2.0.0
 replicate==0.15.4 
