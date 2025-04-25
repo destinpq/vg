@@ -3,7 +3,7 @@
 import React from 'react';
 import { Tabs } from 'antd';
 import VideoGenerator from '../components/VideoGenerator';
-import ConversationGenerator from '../components/ConversationGenerator';
+import ConversationGenerator from '../components/conversation-generator';
 import ImageToVideoGenerator from '../components/ImageToVideoGenerator';
 import DevotionalVideoGenerator from '../components/DevotionalVideoGenerator';
 

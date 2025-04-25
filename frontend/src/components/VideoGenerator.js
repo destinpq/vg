@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './VideoGenerator.css';
+// import './VideoGenerator.css'; // Removed missing CSS import
 
 // Set API URL to match the backend port
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
